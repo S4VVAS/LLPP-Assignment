@@ -36,41 +36,44 @@ void Ped::Model::setup(std::vector<Ped::Tagent*> agentsInScenario, std::vector<T
 	setupHeatmapSeq();
 }
 
-struct args {
+struct args 
+{
     int start;
 	int end;
-	std::vector<Ped::Tagent*> agents;
+	std::vector<Ped::Tagent*> *agents;
 };
 
-void *moveAgent(void *arguments)
+void *moveAgent(void *input)
 {
-	args *args2 = (args*)arguments;
-	for(int i = args2->start ; i < args2->end; i++)
-	for (Ped::Tagent *agent : args2->agents)
-	{
-		agent->computeNextDesiredPosition();
+	struct args *args2 = (struct args*)input;
+    for(int i = args2->start ; i < args2->end; i++)
+    {
+		Ped::Tagent* agent = (*args2->agents).at(i);
+        agent->computeNextDesiredPosition();
 		agent->setX(agent->getDesiredX());
 		agent->setY(agent->getDesiredY());
-    }
-	pthread_exit(NULL);
+	}
+    pthread_exit(NULL);
 }
+
 
 int const tNum = 4;
 
 void Ped::Model::tick()
 {
 	switch(implementation){
-		case Ped::PTHREAD : {
-				std::cout << "PTHREAD";
+		case Ped::PTHREAD : 
+		{
 				pthread_t threads[tNum];
 				int step = (agents.size() - (agents.size() % tNum)) / tNum ;
 				int curr = 0;
 
-				for(int threadNum = 1; threadNum <= tNum; threadNum++) {
+				for(int threadNum = 1; threadNum <= tNum; threadNum++) 
+				{
 					struct args *arguments = (struct args *)malloc(sizeof(struct args));
 					arguments->start = curr;
-					arguments->agents = agents;
-
+					arguments->agents = &agents;
+					
 					if(curr + step + step >= agents.size())
 						arguments->end = agents.size();
 					else
@@ -78,44 +81,48 @@ void Ped::Model::tick()
 
 					curr = arguments->end;     
 
-					if(pthread_create(&threads[threadNum], NULL, moveAgent, arguments)) {
+					if(pthread_create(&threads[threadNum], NULL, moveAgent, arguments)) 
+					{
 							printf("Error: thread was not created\n");
 							exit(EXIT_FAILURE);
 					}
+					
 				}
-
+				
 				for(int threadNum = 1; threadNum <= tNum; threadNum++) {     
 					pthread_join(threads[threadNum], NULL);
 				}
+				
 				break;
 			}
 			 
-		case Ped::SEQ : {std::cout << "SEQ";
-			 for ( Ped::Tagent* agent : agents){
+		case Ped::SEQ : 
+		{
+			 for ( Ped::Tagent* agent : agents)
+			 {
     
-			      agent->computeNextDesiredPosition();
+				agent->computeNextDesiredPosition();
 
-			      agent->setX(agent->getDesiredX());
-			      agent->setY(agent->getDesiredY());
-
-		    	}
-				 
-			 break;
-			}
-		case Ped::CUDA : {std::cout << "CUDA";break;}
-		case Ped::OMP : {
-			std::cout << "OMP";
-		 	#pragma omp parallel for
-			for ( Ped::Tagent* agent : agents){
-
-			      agent->computeNextDesiredPosition();
-
-			      agent->setX(agent->getDesiredX());
-			      agent->setY(agent->getDesiredY());
+				agent->setX(agent->getDesiredX());
+				agent->setY(agent->getDesiredY());
 
 			}
 				 
 			 break;
+			}
+		case Ped::CUDA : {break;}
+		case Ped::OMP : 
+		{
+			#pragma omp parallel for
+			for ( Ped::Tagent* agent : agents)
+			{
+
+					agent->computeNextDesiredPosition();
+
+					agent->setX(agent->getDesiredX());
+					agent->setY(agent->getDesiredY());
+			}		
+			break;
 		}
 	}
 	

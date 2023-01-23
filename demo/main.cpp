@@ -56,9 +56,9 @@ int main(int argc, char*argv[]) {
 			    cout << "Using OpenMP\n";
 			    implementation_to_test = Ped::OMP;
 			  }
-			else if (strcmp(&argv[i][2], "threads") == 0)
+			else if (strcmp(&argv[i][2], "pthread") == 0)
 			  {
-			    cout << "Using C++ threads\n";
+			    cout << "Using pthread\n";
 			    implementation_to_test = Ped::PTHREAD;
 			  }
 			else
