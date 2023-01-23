@@ -33,6 +33,7 @@ int main(int argc, char*argv[]) {
 	bool timing_mode = 0;
 	int i = 1;
 	QString scenefile = "scenario.xml";
+	Ped::IMPLEMENTATION implementation_to_test = Ped::SEQ;
 
 	// Argument handling
 	while (i < argc)
@@ -49,6 +50,16 @@ int main(int argc, char*argv[]) {
 				cout << "Usage: " << argv[0] << " [--help] [--timing-mode] [scenario]" << endl;
 				return 0;
 			}
+			else if (strcmp(&argv[i][2], "omp") == 0)
+			  {
+			    cout << "Using OpenMP\n";
+			    implementation_to_test = Ped::OMP;
+			  }
+			else if (strcmp(&argv[i][2], "threads") == 0)
+			  {
+			    cout << "Using C++ threads\n";
+			    implementation_to_test = Ped::PTHREAD;
+			  }
 			else
 			{
 				cerr << "Unrecognized command: \"" << argv[i] << "\". Ignoring ..." << endl;
@@ -67,7 +78,7 @@ int main(int argc, char*argv[]) {
 		// Reading the scenario file and setting up the crowd simulation model
 		Ped::Model model;
 		ParseScenario parser(scenefile);
-		model.setup(parser.getAgents(), parser.getWaypoints(), Ped::SEQ);
+		model.setup(parser.getAgents(), parser.getWaypoints(), implementation_to_test);
 
 		// Default number of steps to simulate. Feel free to change this.
 		const int maxNumberOfStepsToSimulate = 100000;
@@ -99,7 +110,6 @@ int main(int argc, char*argv[]) {
 
 			// Change this variable when testing different versions of your code. 
 			// May need modification or extension in later assignments depending on your implementations
-			Ped::IMPLEMENTATION implementation_to_test = Ped::SEQ;
 			{
 				Ped::Model model;
 				ParseScenario parser(scenefile);
