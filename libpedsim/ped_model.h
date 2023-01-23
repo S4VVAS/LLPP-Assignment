@@ -90,6 +90,7 @@ namespace Ped{
 
 		void setupHeatmapSeq();
 		void updateHeatmapSeq();
+		void moveAgent(int start, int end);
 	};
 }
 #endif

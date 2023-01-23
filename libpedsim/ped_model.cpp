@@ -14,6 +14,7 @@
 #include "cuda_testkernel.h"
 #include <omp.h>
 #include <thread>
+#include <pthread.h>
 
 #include <stdlib.h>
 
@@ -35,9 +36,51 @@ void Ped::Model::setup(std::vector<Ped::Tagent*> agentsInScenario, std::vector<T
 	setupHeatmapSeq();
 }
 
+struct args {
+    int start;
+	int end;
+};
+
+void Ped::Model::moveAgent(int start, int end)
+{
+	for(int i = start ; i < end; i++)
+	for (Ped::Tagent *agent : agents)
+	{
+		agent->computeNextDesiredPosition();
+		agent->setX(agent->getDesiredX());
+		agent->setY(agent->getDesiredY());
+    }
+	pthread_exit(NULL);
+}
+
+int const tNum = 4;
+
 void Ped::Model::tick()
 {
-	// EDIT HERE FOR ASSIGNMENT 1
+	pthread_t threads[tNum];
+	int step = (agents.size() - (agents.size() % tNum)) / tNum ;
+	int curr = 0;
+
+	for(int threadNum = 1; threadNum <= tNum; threadNum++) {
+		struct args *arguments = (struct args *)malloc(sizeof(struct args));
+		arguments->start = curr;
+
+		if(curr + step + step >= agents.size())
+			arguments->end = agents.size();
+		else
+			arguments->end = curr + step;
+
+		curr = arguments->end;     
+
+		if(pthread_create(&threads[threadNum], NULL, moveAgent, (void *)arguments)) {
+				printf("Error: thread was not created\n");
+				exit(EXIT_FAILURE);
+		}
+    }
+
+	for(int threadNum = 1; threadNum <= tNum; threadNum++) {     
+		pthread_join(threads[threadNum], NULL);
+    }
 }
 
 ////////////
