@@ -89,9 +89,34 @@ void Ped::Model::tick()
 				}
 				break;
 			}
-		case Ped::SEQ : {std::cout << "SEQ";break;}
+			 
+		case Ped::SEQ : {std::cout << "SEQ";
+			 for ( Ped::Tagent* agent : agents){
+    
+			      agent->computeNextDesiredPosition();
+
+			      agent->setX(agent->getDesiredX());
+			      agent->setY(agent->getDesiredY());
+
+		    	}
+				 
+			 break;
+			}
 		case Ped::CUDA : {std::cout << "CUDA";break;}
-		case Ped::OMP : {std::cout << "OMP";break;}
+		case Ped::OMP : {
+			std::cout << "OMP";
+		 	#pragma omp parallel for
+			for ( Ped::Tagent* agent : agents){
+
+			      agent->computeNextDesiredPosition();
+
+			      agent->setX(agent->getDesiredX());
+			      agent->setY(agent->getDesiredY());
+
+			}
+				 
+			 break;
+		}
 	}
 	
 }
