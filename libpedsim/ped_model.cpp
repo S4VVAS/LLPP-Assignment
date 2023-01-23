@@ -39,12 +39,14 @@ void Ped::Model::setup(std::vector<Ped::Tagent*> agentsInScenario, std::vector<T
 struct args {
     int start;
 	int end;
+	std::vector<Ped::Tagent*> agents;
 };
 
-void Ped::Model::moveAgent(int start, int end)
+void *moveAgent(void *arguments)
 {
-	for(int i = start ; i < end; i++)
-	for (Ped::Tagent *agent : agents)
+	args *args2 = (args*)arguments;
+	for(int i = args2->start ; i < args2->end; i++)
+	for (Ped::Tagent *agent : args2->agents)
 	{
 		agent->computeNextDesiredPosition();
 		agent->setX(agent->getDesiredX());
@@ -57,30 +59,41 @@ int const tNum = 4;
 
 void Ped::Model::tick()
 {
-	pthread_t threads[tNum];
-	int step = (agents.size() - (agents.size() % tNum)) / tNum ;
-	int curr = 0;
+	switch(implementation){
+		case Ped::PTHREAD : {
+				std::cout << "PTHREAD";
+				pthread_t threads[tNum];
+				int step = (agents.size() - (agents.size() % tNum)) / tNum ;
+				int curr = 0;
 
-	for(int threadNum = 1; threadNum <= tNum; threadNum++) {
-		struct args *arguments = (struct args *)malloc(sizeof(struct args));
-		arguments->start = curr;
+				for(int threadNum = 1; threadNum <= tNum; threadNum++) {
+					struct args *arguments = (struct args *)malloc(sizeof(struct args));
+					arguments->start = curr;
+					arguments->agents = agents;
 
-		if(curr + step + step >= agents.size())
-			arguments->end = agents.size();
-		else
-			arguments->end = curr + step;
+					if(curr + step + step >= agents.size())
+						arguments->end = agents.size();
+					else
+						arguments->end = curr + step;
 
-		curr = arguments->end;     
+					curr = arguments->end;     
 
-		if(pthread_create(&threads[threadNum], NULL, moveAgent, (void *)arguments)) {
-				printf("Error: thread was not created\n");
-				exit(EXIT_FAILURE);
-		}
-    }
+					if(pthread_create(&threads[threadNum], NULL, moveAgent, arguments)) {
+							printf("Error: thread was not created\n");
+							exit(EXIT_FAILURE);
+					}
+				}
 
-	for(int threadNum = 1; threadNum <= tNum; threadNum++) {     
-		pthread_join(threads[threadNum], NULL);
-    }
+				for(int threadNum = 1; threadNum <= tNum; threadNum++) {     
+					pthread_join(threads[threadNum], NULL);
+				}
+				break;
+			}
+		case Ped::SEQ : {std::cout << "SEQ";break;}
+		case Ped::CUDA : {std::cout << "CUDA";break;}
+		case Ped::OMP : {std::cout << "OMP";break;}
+	}
+	
 }
 
 ////////////
