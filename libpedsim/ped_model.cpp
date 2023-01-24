@@ -113,7 +113,10 @@ void Ped::Model::tick()
 		case Ped::CUDA : {break;}
 		case Ped::OMP : 
 		{
+			// - Uncomment to set n of threads
+			//omp_set_num_threads(10);
 			#pragma omp parallel for
+			// We argue that we don't have to point out shared or private variables in this case
 			for ( Ped::Tagent* agent : agents)
 			{
 
