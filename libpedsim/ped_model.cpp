@@ -53,11 +53,12 @@ void *moveAgent(void *input)
 		agent->setX(agent->getDesiredX());
 		agent->setY(agent->getDesiredY());
 	}
+	delete args2;
     pthread_exit(NULL);
 }
 
 
-int const tNum = 4;
+int const tNum = 10; // Number of threads
 
 void Ped::Model::tick()
 {
@@ -70,10 +71,12 @@ void Ped::Model::tick()
 
 				for(int threadNum = 1; threadNum <= tNum; threadNum++) 
 				{
-					struct args *arguments = (struct args *)malloc(sizeof(struct args));
+					// Set up the structure to send with the task
+					struct args *arguments = new args;
 					arguments->start = curr;
 					arguments->agents = &agents;
 					
+					// Divide task for threads
 					if(curr + step + step >= agents.size())
 						arguments->end = agents.size();
 					else
@@ -88,7 +91,7 @@ void Ped::Model::tick()
 					}
 					
 				}
-				
+				// Spawn the threads
 				for(int threadNum = 1; threadNum <= tNum; threadNum++) {     
 					pthread_join(threads[threadNum], NULL);
 				}
@@ -113,7 +116,10 @@ void Ped::Model::tick()
 		case Ped::CUDA : {break;}
 		case Ped::OMP : 
 		{
+			// - Uncomment to set n of threads
+			//omp_set_num_threads(8);
 			#pragma omp parallel for
+			// We argue that we don't have to point out shared or private variables in this case
 			for ( Ped::Tagent* agent : agents)
 			{
 
