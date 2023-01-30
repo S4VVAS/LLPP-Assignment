@@ -16,6 +16,7 @@
 #include <set>
 
 #include "ped_agent.h"
+#include "simd_funcs.h"
 
 namespace Ped{
 	class Tagent;
@@ -60,6 +61,8 @@ namespace Ped{
 
 		// The waypoints in this scenario
 		std::vector<Twaypoint*> destinations;
+
+		Simd_funcs SIMD;
 
 		// Moves an agent towards its next position
 		void move(Ped::Tagent *agent);
