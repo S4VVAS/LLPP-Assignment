@@ -32,8 +32,8 @@ void Ped::Model::setup(std::vector<Ped::Tagent*> agentsInScenario, std::vector<T
 	// Sets the chosen implemenation. Standard in the given code is SEQ
 	this->implementation = implementation;
 
-	if (implementation == Ped::VECTOR)
-		SIMD = new Simd_funcs(agentsInScenario.size());
+	//if (implementation == Ped::VECTOR)
+	//	SIMD = new Simd_funcs(agentsInScenario.size());
 
 	// Set up heatmap (relevant for Assignment 4)
 	setupHeatmapSeq();

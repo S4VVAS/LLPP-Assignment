@@ -72,3 +72,8 @@ Ped::Twaypoint* Ped::Tagent::getNextDestination() {
 
 	return nextDestination;
 }
+
+Ped::Twaypoint *Ped::Tagent::getDestination()
+{
+	return destination;
+}

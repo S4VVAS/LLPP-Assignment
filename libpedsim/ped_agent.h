@@ -33,6 +33,8 @@ namespace Ped {
 		int getDesiredX() const { return desiredPositionX; }
 		int getDesiredY() const { return desiredPositionY; }
 
+		Twaypoint *getDestination();
+
 		// Sets the agent's position
 		void setX(int newX) { x = newX; }
 		void setY(int newY) { y = newY; }
