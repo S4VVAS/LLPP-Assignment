@@ -3,32 +3,43 @@
 
 namespace Ped
 {
-    Simd_funcs::Simd_funcs(int n_agents)
+    Simd_funcs::Simd_funcs(std::vector<Ped::Tagent*> agents)
     {
         // Allocate floats with SSE-compatible alignment
-        xPos  = (float*) _mm_malloc(n_agents *sizeof(float), 16);
-        yPos  = (float*) _mm_malloc(n_agents *sizeof(float), 16);
-        xDest = (float*) _mm_malloc(n_agents *sizeof(float), 16);
-        yDest = (float*) _mm_malloc(n_agents *sizeof(float), 16);
+        xPos  = (float*) _mm_malloc(agents.size() *sizeof(float), 16);
+        yPos  = (float*) _mm_malloc(agents.size() *sizeof(float), 16);
+        xDest = (float*) _mm_malloc(agents.size() *sizeof(float), 16);
+        yDest = (float*) _mm_malloc(agents.size() *sizeof(float), 16);
+
+        // Set up the start-positions and start destinations
+        for (int i = 0; i < agents.size(); i++)
+        {
+            xPos[i]  = (float) agents[i]->getX();
+            yPos[i]  = (float) agents[i]->getY();
+            xDest[i] = (float) agents[i]->getDestination()->getX();
+            yDest[i] = (float) agents[i]->getDestination()->getY();
+        }
     }
 
-    void Simd_funcs::update_pos(int n_agents, std::vector<Ped::Tagent*> agents)
+    void Simd_funcs::update_pos()
     {
-        for (int i = 0; i < n_agents; i += 4)
+        for (int i = 0; i < agents.size(); i += 4)
         {
             // CHEAT: if there are less than 4 instructions on the last iteration, skip
             // until we figure out what to do here! We don't want a seg fault!
-            if (n_agents - i < 4)
+            if (agents.size() - i < 4)
                 return;
 
             // Set-up SSE-variables
-            __m128 xPos;
-            __m128 yPos;
+            __m128 XPOS;
+            __m128 YPOS;
             __m128 diffX;
             __m128 diffY;
             __m128 len; 
             __m128 t0;
             __m128 t1;
+
+            1 / 0; // Somehow this function doesn't start, this should crash!
 
             // Load values into SSE
             XPOS = _mm_load_ps(&xPos[i]);

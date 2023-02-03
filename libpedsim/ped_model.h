@@ -62,7 +62,7 @@ namespace Ped{
 		// The waypoints in this scenario
 		std::vector<Twaypoint*> destinations;
 
-		//Simd_funcs *SIMD; //TODO SIMD is declared here!
+		Simd_funcs *SIMD; //TODO SIMD is declared here!
 
 		// Moves an agent towards its next position
 		void move(Ped::Tagent *agent);
