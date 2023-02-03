@@ -73,6 +73,20 @@ Ped::Twaypoint* Ped::Tagent::getNextDestination() {
 	return nextDestination;
 }
 
+Ped::Twaypoint *Ped::Tagent::changeDestination()
+{
+	Ped::Twaypoint* nextDestination = NULL;
+	 
+	if (!waypoints.empty())
+	{
+		waypoints.push_back(destination);
+		nextDestination = waypoints.front();
+		waypoints.pop_front();
+	}
+	return nextDestination;
+	
+}
+
 Ped::Twaypoint *Ped::Tagent::getDestination()
 {
 	return destination;

@@ -115,11 +115,12 @@ void Ped::Model::tick()
 			}
 				 
 			 break;
-			}
+		}
 		case Ped::CUDA : {break;}
 		case Ped::VECTOR : 
 		{
 			SIMD->update_pos();
+
 			break;
 		}
 		case Ped::OMP : 
@@ -130,7 +131,6 @@ void Ped::Model::tick()
 			// We argue that we don't have to point out shared or private variables in this case
 			for ( Ped::Tagent* agent : agents)
 			{
-
 					agent->computeNextDesiredPosition();
 
 					agent->setX(agent->getDesiredX());

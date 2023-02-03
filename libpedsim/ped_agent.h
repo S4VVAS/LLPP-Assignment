@@ -34,6 +34,7 @@ namespace Ped {
 		int getDesiredY() const { return desiredPositionY; }
 
 		Twaypoint *getDestination();
+		Twaypoint *changeDestination(); 
 
 		// Sets the agent's position
 		void setX(int newX) { x = newX; }

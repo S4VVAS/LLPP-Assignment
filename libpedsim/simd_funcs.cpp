@@ -4,9 +4,10 @@
 
 namespace Ped
 {
-    Simd_funcs::Simd_funcs(std::vector<Ped::Tagent*> agents)
+    Simd_funcs::Simd_funcs(std::vector<Ped::Tagent*> startAgents)
     {
-      std::cout << "Creating\n";
+        agents = startAgents;
+        std::cout << "Creating\n";
         // Allocate floats with SSE-compatible alignment
         xPos  = (float*) _mm_malloc(agents.size() *sizeof(float), 16);
         yPos  = (float*) _mm_malloc(agents.size() *sizeof(float), 16);
@@ -19,15 +20,15 @@ namespace Ped
         {
             xPos[i]  = (float) agents[i]->getX();
             yPos[i]  = (float) agents[i]->getY();
-	    // This is probably bad but it segfaults without initial positions
-	    agents[i]->computeNextDesiredPosition();
+            // This is probably bad but it segfaults without initial positions
+            agents[i]->computeNextDesiredPosition();
             xDest[i] = (float) agents[i]->getDestination()->getx();
             yDest[i] = (float) agents[i]->getDestination()->gety();
         }
 	std::cout << "Created\n";
     }
 
-  void Simd_funcs::update_pos(std::vector<Ped::Tagent*> agents)
+  void Simd_funcs::update_pos()
     {
         for (int i = 0; i < agents.size(); i += 4)
         {
@@ -64,35 +65,26 @@ namespace Ped
             len = _mm_sqrt_ps(t0);
     
             // Check whether position is reached and if so update destination
-            /*
-            _mm_store_ps(storeX, len) // store length in storeX
-            update_dest(storeX[0], agents[i+0]);
-            update_dest(storeX[1], agents[i+1]);
-            update_dest(storeX[2], agents[i+2]);
-            update_dest(storeX[3], agents[i+3]);
-            // Update destination
-            // TODO: Maybe we must set destination on first tick!
-            xDest = _mm_set_ps(agents[i+0]->getDestination()->getx(),
-			       agents[i+1]->getDestination()->getx(),
-			       agents[i+2]->getDestination()->getx(),
-			       agents[i+3]->getDestination()->getx());
-            yDest = _mm_set_ps(agents[i+0]->getDestination()->gety(),
-			       agents[i+1]->getDestination()->gety(),
-			       agents[i+2]->getDestination()->gety(),
-			       agents[i+3]->getDestination()->gety());
-	    */
+            
+            float storeX[4];
+            _mm_store_ps(storeX, len); // store length in storeX
+            update_dest(storeX[0], agents[i+0], i+0);
+            update_dest(storeX[1], agents[i+1], i+1);
+            update_dest(storeX[2], agents[i+2], i+2);
+            update_dest(storeX[3], agents[i+3], i+3);
+            
 	    std::cout << "DESIRED\n";
             //desiredPositionX = (int)round(x + diffX / len);
-            diffX = _mm_add_ps(XPOS, diffX);
-            XPOS = _mm_div_ps(diffX, len);
+            diffX = _mm_div_ps(diffX, len);
+            XPOS  = _mm_add_ps(XPOS, diffX);
             //desiredPositionY = (int)round(y + diffY / len);
-            diffY = _mm_add_ps(YPOS, diffY);
-            YPOS  = _mm_div_ps(t1, len);
+            diffY  = _mm_div_ps(t1, len);
+            YPOS   = _mm_add_ps(YPOS, diffY);
 
 	    std::cout << "STORING\n";
             // Store the values back
-            _mm_store_ps(&xPos[i], diffX);
-            _mm_store_ps(&yPos[i], diffY);
+            _mm_store_ps(&xPos[i], XPOS);
+            _mm_store_ps(&yPos[i], YPOS);
 
 	    std::cout << "AGENTS\n";
             // Store x and y in agents - however this is bad and slow!
@@ -106,18 +98,18 @@ namespace Ped
             agents[i + 3]->setY((int) floor(yPos[i + 3]));
         }
     }
-    /*
-    void Simd_funcs::update_dest(float length, Ped::Tagent* agent)
+    
+    void Simd_funcs::update_dest(float length, Ped::Tagent* agent, int n)
     {
-        bool agentReachedDestination = length < agent->getDestination()->getr())
-        if ((agentReachedDestination || agent->getDestination() == NULL) && !agent->waypoints.empty()) 
+        bool agentReachedDestination = length < agent->getDestination()->getr();
+        if (agentReachedDestination || agent->getDestination() == NULL) 
         {
-            // Case 1: agent has reached destination (or has no current destination);
-            // get next destination if available
-            agent->waypoints.push_back(destination);
-            agent->nextDestination = waypoints.front();
-            agent->waypoints.pop_front();
+            Ped::Twaypoint *waypoint = agent->changeDestination();
+            if (waypoint != NULL)
+            {
+                xDest[n] = (float) waypoint->getx();
+                yDest[n] = (float) waypoint->gety();
+            }
         }
     }
-    */
 } 
