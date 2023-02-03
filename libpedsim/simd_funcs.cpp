@@ -1,27 +1,33 @@
 #include "simd_funcs.h"
+#include <iostream>
 #include<cmath>
 
 namespace Ped
 {
     Simd_funcs::Simd_funcs(std::vector<Ped::Tagent*> agents)
     {
+      std::cout << "Creating\n";
         // Allocate floats with SSE-compatible alignment
         xPos  = (float*) _mm_malloc(agents.size() *sizeof(float), 16);
         yPos  = (float*) _mm_malloc(agents.size() *sizeof(float), 16);
         xDest = (float*) _mm_malloc(agents.size() *sizeof(float), 16);
         yDest = (float*) _mm_malloc(agents.size() *sizeof(float), 16);
 
-        // Set up the start-positions and start destinations
+       
+	   // Set up the start-positions and start destinations
         for (int i = 0; i < agents.size(); i++)
         {
             xPos[i]  = (float) agents[i]->getX();
             yPos[i]  = (float) agents[i]->getY();
-            xDest[i] = (float) agents[i]->getDestination()->getX();
-            yDest[i] = (float) agents[i]->getDestination()->getY();
+	    // This is probably bad but it segfaults without initial positions
+	    agents[i]->computeNextDesiredPosition();
+            xDest[i] = (float) agents[i]->getDestination()->getx();
+            yDest[i] = (float) agents[i]->getDestination()->gety();
         }
+	std::cout << "Created\n";
     }
 
-    void Simd_funcs::update_pos()
+  void Simd_funcs::update_pos(std::vector<Ped::Tagent*> agents)
     {
         for (int i = 0; i < agents.size(); i += 4)
         {
@@ -29,6 +35,7 @@ namespace Ped
             // until we figure out what to do here! We don't want a seg fault!
             if (agents.size() - i < 4)
                 return;
+	    std::cout << "UPDATING\n";
 
             // Set-up SSE-variables
             __m128 XPOS;
@@ -39,14 +46,14 @@ namespace Ped
             __m128 t0;
             __m128 t1;
 
-            1 / 0; // Somehow this function doesn't start, this should crash!
-
+	    std::cout << "LOADING\n";
             // Load values into SSE
             XPOS = _mm_load_ps(&xPos[i]);
             YPOS = _mm_load_ps(&yPos[i]);
             t0 = _mm_load_ps(&xDest[i]);
             t1 = _mm_load_ps(&yDest[i]);
 
+	    std::cout << "CALCULATING\n";
             // Calculate xDest - xPos (and same with y)
             diffX = _mm_sub_ps(t0, XPOS);
             diffY = _mm_sub_ps(t1, YPOS);
@@ -65,15 +72,16 @@ namespace Ped
             update_dest(storeX[3], agents[i+3]);
             // Update destination
             // TODO: Maybe we must set destination on first tick!
-            xDest = _mm_set_ps(agents[i+0]->destination->getx(),
-                            agents[i+1]->destination->getx(),
-                            agents[i+2]->destination->getx(),
-                            agents[i+3]->destination->getx());
-            yDest = _mm_set_ps(agents[i+0]->destination->getY(),
-                            agents[i+1]->destination->getY(),
-                            agents[i+2]->destination->getY(),
-                            agents[i+3]->destination->getY());
-            */
+            xDest = _mm_set_ps(agents[i+0]->getDestination()->getx(),
+			       agents[i+1]->getDestination()->getx(),
+			       agents[i+2]->getDestination()->getx(),
+			       agents[i+3]->getDestination()->getx());
+            yDest = _mm_set_ps(agents[i+0]->getDestination()->gety(),
+			       agents[i+1]->getDestination()->gety(),
+			       agents[i+2]->getDestination()->gety(),
+			       agents[i+3]->getDestination()->gety());
+	    */
+	    std::cout << "DESIRED\n";
             //desiredPositionX = (int)round(x + diffX / len);
             diffX = _mm_add_ps(XPOS, diffX);
             XPOS = _mm_div_ps(diffX, len);
@@ -81,10 +89,12 @@ namespace Ped
             diffY = _mm_add_ps(YPOS, diffY);
             YPOS  = _mm_div_ps(t1, len);
 
+	    std::cout << "STORING\n";
             // Store the values back
             _mm_store_ps(&xPos[i], diffX);
             _mm_store_ps(&yPos[i], diffY);
 
+	    std::cout << "AGENTS\n";
             // Store x and y in agents - however this is bad and slow!
             agents[i + 0]->setX((int) floor(xPos[i + 0]));
             agents[i + 1]->setX((int) floor(xPos[i + 1]));
