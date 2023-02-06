@@ -5,6 +5,7 @@
 #include <QBrush>
 
 #include <iostream>
+#include "simd_funcs.h"
 
 #include <stdlib.h>
 
@@ -54,6 +55,7 @@ MainWindow::MainWindow(const Ped::Model &pedModel) : model(pedModel)
 }
 
 void MainWindow::paint() {
+	Ped::Simd_funcs *simd = model.SIMD;
 
 	// Uncomment this to paint the heatmap (Assignment 4)
 	// const int heatmapSize = model.getHeatmapSize();
@@ -64,10 +66,26 @@ void MainWindow::paint() {
 	// Paint all agents: green, if the only agent on that position, otherwise red
 	std::set<std::tuple<int, int> > positionsTaken;
 	std::vector<ViewAgent*>::iterator it;
+	int agentN = 0;
 	for (it = viewAgents.begin(); it != viewAgents.end(); it++)
 	{
 		size_t tupleSizeBeforeInsert = positionsTaken.size();
+		
+		// TODO: FIX
 		positionsTaken.insert((*it)->getPosition());
+		// if (simd == NULL) 
+		// {
+		// 	// TODO: I know the code goes in here
+		// 	positionsTaken.insert((*it)->getPosition());
+		// }
+		// else 
+		// {
+		// 	// TODO: I know the code goes in here
+		// 	// TODO: I also know that get position return correct numbers
+		// 	positionsTaken.insert(simd->getPosition(agentN));
+		// 	agentN++;
+		// }
+		
 		size_t tupleSizeAfterInsert = positionsTaken.size();
 
 		QColor color;

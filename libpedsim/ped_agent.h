@@ -44,6 +44,9 @@ namespace Ped {
 		// to the current destination
 		void computeNextDesiredPosition();
 
+		// Returns the next destination to visit
+		Twaypoint* getNextDestination();
+
 		// Position of agent defined by x and y
 		int getX() const { return x; };
 		int getY() const { return y; };
@@ -74,8 +77,9 @@ namespace Ped {
 		// Internal init function 
 		void init(int posX, int posY);
 
+		// TODO: Original position!
 		// Returns the next destination to visit
-		Twaypoint* getNextDestination();
+		// Twaypoint* getNextDestination();
 	};
 }
 

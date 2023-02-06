@@ -35,6 +35,8 @@ namespace Ped{
 		// Coordinates a time step in the scenario: move all agents by one step (if applicable).
 		void tick();
 
+		Simd_funcs *SIMD; //TODO SIMD is declared here!
+
 		// Returns the agents of this scenario
 		const std::vector<Tagent*> getAgents() const { return agents; };
 
@@ -61,8 +63,6 @@ namespace Ped{
 
 		// The waypoints in this scenario
 		std::vector<Twaypoint*> destinations;
-
-		Simd_funcs *SIMD; //TODO SIMD is declared here!
 
 		// Moves an agent towards its next position
 		void move(Ped::Tagent *agent);
