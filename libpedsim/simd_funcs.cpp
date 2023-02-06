@@ -16,14 +16,12 @@ namespace Ped
 
        
 	   // Set up the start-positions and start destinations
+
+       // TODO: Dubbelkollat och de startar rätt
         for (int i = 0; i < agents.size(); i++)
         {
             xPos[i]  = (float) agents[i]->getX();
             yPos[i]  = (float) agents[i]->getY();
-            // This is probably bad but it segfaults without initial positions
-            agents[i]->computeNextDesiredPosition();
-            xDest[i] = (float) agents[i]->getDestination()->getx();
-            yDest[i] = (float) agents[i]->getDestination()->gety();
         }
 	std::cout << "Created\n";
     }
@@ -57,15 +55,21 @@ namespace Ped
             // we should get the next position, but somehow they still move weird
             for (int j = 0; j < 4; j++)
             {
-                    if (agents.size() - (i+j) < 4)
+                if (agents.size() - (i+j) < 4)
                     break;
                 // Gets a waypoint
-                Twaypoint *wp = agents[i+j]->getNextDestination();
-                if (wp == NULL)
-                    return;
+                //Twaypoint *wp = agents[i+j]->getNextDestination();
+                //if (wp == NULL)
+                //    return;
                 // If a waypoint exist, get the x position of the waypoint
-                xDest[i+j] = (float) wp->getx();
-                yDest[i+j] = (float) wp->gety();
+                //xDest[i+j] = (float) wp->getx();
+                //yDest[i+j] = (float) wp->gety();
+                agents[i+j]->computeNextDesiredPosition();
+                // When there is no new position this may be null and cause a segfault
+                if (agents[i+j]->getDestination() == NULL)
+                    continue;
+                xDest[i+j] = (float) agents[i+j]->getDestination()->getx();
+                yDest[i+j] = (float) agents[i+j]->getDestination()->gety();
             }
 
             // CHEAT: if there are less than 4 instructions on the last iteration, skip
