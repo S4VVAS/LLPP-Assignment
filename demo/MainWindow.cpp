@@ -41,9 +41,10 @@ MainWindow::MainWindow(const Ped::Model &pedModel) : model(pedModel)
 
 	std::vector<Ped::Tagent*>::const_iterator it;
 
+	int agentN = 0;
 	for (it = agents.begin(); it != agents.end(); it++)
 	{
-		viewAgents.push_back(new ViewAgent(*it, scene));
+		viewAgents.push_back(new ViewAgent(*it, scene, agentN++, model.SIMD));
 	}
 
 	const int heatmapSize = model.getHeatmapSize();
@@ -55,7 +56,6 @@ MainWindow::MainWindow(const Ped::Model &pedModel) : model(pedModel)
 }
 
 void MainWindow::paint() {
-	Ped::Simd_funcs *simd = model.SIMD;
 
 	// Uncomment this to paint the heatmap (Assignment 4)
 	// const int heatmapSize = model.getHeatmapSize();
@@ -66,22 +66,11 @@ void MainWindow::paint() {
 	// Paint all agents: green, if the only agent on that position, otherwise red
 	std::set<std::tuple<int, int> > positionsTaken;
 	std::vector<ViewAgent*>::iterator it;
-	int agentN = 0;
+	
 	for (it = viewAgents.begin(); it != viewAgents.end(); it++)
 	{
 		size_t tupleSizeBeforeInsert = positionsTaken.size();
-
-		// If SIMD is in use update from SIMD-module, otherwise update from model
-		if (simd != NULL) 
-		{
-			positionsTaken.insert(simd->getPosition(agentN));
-			agentN++;
-		}
-		else 
-		{
-			positionsTaken.insert((*it)->getPosition());
-		}
-		
+		positionsTaken.insert((*it)->getPosition());
 		size_t tupleSizeAfterInsert = positionsTaken.size();
 
 		QColor color;

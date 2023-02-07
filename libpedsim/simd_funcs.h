@@ -11,7 +11,8 @@ namespace Ped {
         public:
             Simd_funcs(std::vector<Ped::Tagent*> startAgents);
             void update_pos();
-            std::pair<int, int> getPosition(int agentN);
+            int getPositionX(int agentN);
+            int getPositionY(int agentN);
 
         private:
             float *xPos;

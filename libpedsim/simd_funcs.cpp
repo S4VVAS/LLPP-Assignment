@@ -23,22 +23,24 @@ namespace Ped
 	   // Set up the start-positions and start destinations
         for (int i = 0; i < agents.size(); i++)
         {
-            xPos[i]  = (float) agents[i]->getX();
-            yPos[i]  = (float) agents[i]->getY();
-            agents[i]->computeNextDesiredPosition();
+            xPos[i]  = (float) agents.at(i)->getX();
+            yPos[i]  = (float) agents.at(i)->getY();
+            agents.at(i)->computeNextDesiredPosition();
             if (agents[i]->getDestination() == NULL)
                 continue;
-            xDest[i] = (float) agents[i]->getDestination()->getx();
-            yDest[i] = (float) agents[i]->getDestination()->gety();
+            xDest[i] = (float) agents.at(i)->getDestination()->getx();
+            yDest[i] = (float) agents.at(i)->getDestination()->gety();
         }
 	std::cout << "Created\n";
     }
 
-    std::pair<int, int> Simd_funcs::getPosition(int agentN)
+    int Simd_funcs::getPositionX(int agentN)
     {
-        int x = (int) round(xPos[agentN]);
-        int y = (int) round(yPos[agentN]);
-        return std::make_pair(x, y);
+        return (int) round(xPos[agentN]);
+    }
+    int Simd_funcs::getPositionY(int agentN)
+    {
+        return (int) round(yPos[agentN]);
     }
 
     void Simd_funcs::update_pos()
@@ -102,10 +104,6 @@ namespace Ped
             {
                 if ((i+j) < agents.size() )
                 {
-                    // TODO: Remove this somehow! Right now we're setting position inside agent!
-                    // Should be set when draws, probably in paint() in mainWindow.cpp
-                    agents[i + j]->setX((int) round(xPos[i + j]));
-                    agents[i + j]->setY((int) round(yPos[i + j]));
                     update_dest(storedLength[j], i+j);
                 }
             }

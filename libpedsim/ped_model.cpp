@@ -15,6 +15,9 @@
 #include <omp.h>
 #include <thread>
 #include <pthread.h>
+#define NUM_BLOCKS 4
+#define BLOCK_WIDTH 32
+
 
 #include <stdlib.h>
 
@@ -117,7 +120,10 @@ void Ped::Model::tick()
 				 
 			 break;
 		}
-		case Ped::CUDA : {break;}
+		case Ped::CUDA : {
+			
+			break;
+			}
 		case Ped::VECTOR : 
 		{
 			SIMD->update_pos();
