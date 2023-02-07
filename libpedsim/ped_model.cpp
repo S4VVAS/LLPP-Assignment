@@ -35,6 +35,7 @@ void Ped::Model::setup(std::vector<Ped::Tagent*> agentsInScenario, std::vector<T
 	// Set up heatmap (relevant for Assignment 4)
 	setupHeatmapSeq();
 
+	SIMD = NULL;
 	if (implementation == Ped::VECTOR)
 		SIMD = new Simd_funcs(agents);
 }

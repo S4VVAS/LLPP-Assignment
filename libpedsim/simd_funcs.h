@@ -19,7 +19,7 @@ namespace Ped {
             float *xDest;
             float *yDest; 
             std::vector<Ped::Tagent*> agents;
-            void update_dest(float length, Ped::Tagent* agent, int n);
+            void update_dest(float length, int n);
     };
 }
 

@@ -73,18 +73,33 @@ Ped::Twaypoint* Ped::Tagent::getNextDestination() {
 	return nextDestination;
 }
 
-Ped::Twaypoint *Ped::Tagent::changeDestination()
-{
+Ped::Twaypoint* Ped::Tagent::getNextDestinationSIMD(float length){
+	
 	Ped::Twaypoint* nextDestination = NULL;
-	 
-	if (!waypoints.empty())
-	{
+	bool agentReachedDestination = false;
+
+	if (destination != NULL) {
+		// compute if agent reached its current destination
+		agentReachedDestination = length < destination->getr();
+	}
+
+	if ((agentReachedDestination || destination == NULL) && !waypoints.empty()) {
+		// Case 1: agent has reached destination (or has no current destination);
+		// get next destination if available
 		waypoints.push_back(destination);
 		nextDestination = waypoints.front();
 		waypoints.pop_front();
 	}
+	else {
+		// Case 2: agent has not yet reached destination, continue to move towards
+		// current destination
+		nextDestination = destination;
+	}
+
+	if (nextDestination != NULL)
+		destination = nextDestination;
+
 	return nextDestination;
-	
 }
 
 Ped::Twaypoint *Ped::Tagent::getDestination()

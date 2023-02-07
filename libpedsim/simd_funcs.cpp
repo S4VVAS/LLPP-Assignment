@@ -2,6 +2,8 @@
 #include <iostream>
 #include <cmath>
 
+#define SIMD_SIZE 4
+
 namespace Ped
 {
     Simd_funcs::Simd_funcs(std::vector<Ped::Tagent*> startAgents)
@@ -11,7 +13,7 @@ namespace Ped
 
         // This results in a aligned size that is alwayds dividable with 4.
         // If agents.size() = 21 we will have 3 extra cells of padding resulting in 24.
-        int alignedSize = agents.size() - (agents.size() % 4) + 4;
+        int alignedSize = agents.size() - (agents.size() % SIMD_SIZE) + SIMD_SIZE;
         // Allocate floats with SSE-compatible alignment
         xPos  = (float*) _mm_malloc(alignedSize * sizeof(float), 16);
         yPos  = (float*) _mm_malloc(alignedSize * sizeof(float), 16);
@@ -19,12 +21,15 @@ namespace Ped
         yDest = (float*) _mm_malloc(alignedSize * sizeof(float), 16);
 
 	   // Set up the start-positions and start destinations
-
-       // TODO: Dubbelkollat och de startar rätt
         for (int i = 0; i < agents.size(); i++)
         {
             xPos[i]  = (float) agents[i]->getX();
             yPos[i]  = (float) agents[i]->getY();
+            agents[i]->computeNextDesiredPosition();
+            if (agents[i]->getDestination() == NULL)
+                continue;
+            xDest[i] = (float) agents[i]->getDestination()->getx();
+            yDest[i] = (float) agents[i]->getDestination()->gety();
         }
 	std::cout << "Created\n";
     }
@@ -43,7 +48,6 @@ namespace Ped
         HOW IT'S DONE IN AGENT FUNCTION:
         1. Check next destination
         2. Calculate next position to move agains:
-
             double diffX = destination->getx() - x;
             double diffY = destination->gety() - y;
             double len = sqrt(diffX * diffX + diffY * diffY);
@@ -51,30 +55,8 @@ namespace Ped
             desiredPositionY = (int)round(y + diffY / len);
         
         */
-        for (int i = 0; i < agents.size(); i += 4)
+        for (int i = 0; i < agents.size(); i += SIMD_SIZE)
         {
-            // CHEAT: TEMPORAL, REMOVE!
-            // Here I use the getNextDestination from the actual agent function,
-            // we should get the next position, but somehow they still move weird
-            for (int j = 0; j < 4; j++)
-            {
-                if ((i+j) >= agents.size())
-                    break;
-                // Gets a waypoint
-                //Twaypoint *wp = agents[i+j]->getNextDestination();
-                //if (wp == NULL)
-                //    return;
-                // If a waypoint exist, get the x position of the waypoint
-                //xDest[i+j] = (float) wp->getx();
-                //yDest[i+j] = (float) wp->gety();
-                agents[i+j]->computeNextDesiredPosition();
-                // When there is no new position this may be null and cause a segfault
-                if (agents[i+j]->getDestination() == NULL)
-                    continue;
-                xDest[i+j] = (float) agents[i+j]->getDestination()->getx();
-                yDest[i+j] = (float) agents[i+j]->getDestination()->gety();
-            }
-
             // Set-up SSE-variables
             __m128 XPOS;
             __m128 YPOS;
@@ -111,31 +93,32 @@ namespace Ped
             _mm_store_ps(&xPos[i], XPOS);
             _mm_store_ps(&yPos[i], YPOS);
 
-            // Store x and y in agents. TODO: however this is bad and slow!
-            // The proper way to do this is the paint() function inside the mainWindow
-            for (int j = 0; j < 4; j++) 
+
+            // Check for each agent if it has reached its destination and change waypoint.
+            // We need the length from current position to destination for this.
+            float storedLength[SIMD_SIZE];
+            _mm_store_ps(storedLength, len);
+            for (int j = 0; j < SIMD_SIZE; j++) 
             {
                 if ((i+j) < agents.size() )
                 {
+                    // TODO: Remove this somehow! Right now we're setting position inside agent!
+                    // Should be set when draws, probably in paint() in mainWindow.cpp
                     agents[i + j]->setX((int) round(xPos[i + j]));
                     agents[i + j]->setY((int) round(yPos[i + j]));
-
+                    update_dest(storedLength[j], i+j);
                 }
             }
         }
     }
     
-    void Simd_funcs::update_dest(float length, Ped::Tagent* agent, int n)
+    void Simd_funcs::update_dest(float length, int n)
     {
-        bool agentReachedDestination = length < agent->getDestination()->getr();
-        if (agentReachedDestination || agent->getDestination() == NULL) 
+        Ped::Twaypoint *waypoint = agents[n]->getNextDestinationSIMD(length); 
+        if (waypoint != NULL)
         {
-            Ped::Twaypoint *waypoint = agent->changeDestination();
-            if (waypoint != NULL)
-            {
-                xDest[n] = (float) waypoint->getx();
-                yDest[n] = (float) waypoint->gety();
-            }
+            xDest[n] = (float) waypoint->getx();
+            yDest[n] = (float) waypoint->gety();
         }
     }
 } 

@@ -70,21 +70,17 @@ void MainWindow::paint() {
 	for (it = viewAgents.begin(); it != viewAgents.end(); it++)
 	{
 		size_t tupleSizeBeforeInsert = positionsTaken.size();
-		
-		// TODO: FIX
-		positionsTaken.insert((*it)->getPosition());
-		// if (simd == NULL) 
-		// {
-		// 	// TODO: I know the code goes in here
-		// 	positionsTaken.insert((*it)->getPosition());
-		// }
-		// else 
-		// {
-		// 	// TODO: I know the code goes in here
-		// 	// TODO: I also know that get position return correct numbers
-		// 	positionsTaken.insert(simd->getPosition(agentN));
-		// 	agentN++;
-		// }
+
+		// If SIMD is in use update from SIMD-module, otherwise update from model
+		if (simd != NULL) 
+		{
+			positionsTaken.insert(simd->getPosition(agentN));
+			agentN++;
+		}
+		else 
+		{
+			positionsTaken.insert((*it)->getPosition());
+		}
 		
 		size_t tupleSizeAfterInsert = positionsTaken.size();
 

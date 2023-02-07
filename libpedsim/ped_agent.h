@@ -47,6 +47,9 @@ namespace Ped {
 		// Returns the next destination to visit
 		Twaypoint* getNextDestination();
 
+		// Returns the next destination to visit using SIMD calculations
+		Twaypoint* getNextDestinationSIMD(float length); 
+
 		// Position of agent defined by x and y
 		int getX() const { return x; };
 		int getY() const { return y; };
