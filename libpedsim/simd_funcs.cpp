@@ -1,6 +1,6 @@
 #include "simd_funcs.h"
 #include <iostream>
-#include<cmath>
+#include <cmath>
 
 namespace Ped
 {
@@ -8,13 +8,16 @@ namespace Ped
     {
         agents = startAgents;
         std::cout << "Creating\n";
-        // Allocate floats with SSE-compatible alignment
-        xPos  = (float*) _mm_malloc(agents.size() *sizeof(float), 16);
-        yPos  = (float*) _mm_malloc(agents.size() *sizeof(float), 16);
-        xDest = (float*) _mm_malloc(agents.size() *sizeof(float), 16);
-        yDest = (float*) _mm_malloc(agents.size() *sizeof(float), 16);
 
-       
+        // This results in a aligned size that is alwayds dividable with 4.
+        // If agents.size() = 21 we will have 3 extra cells of padding resulting in 24.
+        int alignedSize = agents.size() - (agents.size() % 4) + 4;
+        // Allocate floats with SSE-compatible alignment
+        xPos  = (float*) _mm_malloc(alignedSize * sizeof(float), 16);
+        yPos  = (float*) _mm_malloc(alignedSize * sizeof(float), 16);
+        xDest = (float*) _mm_malloc(alignedSize * sizeof(float), 16);
+        yDest = (float*) _mm_malloc(alignedSize * sizeof(float), 16);
+
 	   // Set up the start-positions and start destinations
 
        // TODO: Dubbelkollat och de startar rätt
@@ -28,8 +31,8 @@ namespace Ped
 
     std::pair<int, int> Simd_funcs::getPosition(int agentN)
     {
-        int x = (int) floor(xPos[agentN]);
-        int y = (int) floor(yPos[agentN]);
+        int x = (int) round(xPos[agentN]);
+        int y = (int) round(yPos[agentN]);
         return std::make_pair(x, y);
     }
 
@@ -55,7 +58,7 @@ namespace Ped
             // we should get the next position, but somehow they still move weird
             for (int j = 0; j < 4; j++)
             {
-                if (agents.size() - (i+j) < 4)
+                if ((i+j) >= agents.size())
                     break;
                 // Gets a waypoint
                 //Twaypoint *wp = agents[i+j]->getNextDestination();
@@ -71,11 +74,6 @@ namespace Ped
                 xDest[i+j] = (float) agents[i+j]->getDestination()->getx();
                 yDest[i+j] = (float) agents[i+j]->getDestination()->gety();
             }
-
-            // CHEAT: if there are less than 4 instructions on the last iteration, skip
-            // until we figure out what to do here! We don't want a seg fault!
-            if (agents.size() - i < 4)
-                return;
 
             // Set-up SSE-variables
             __m128 XPOS;
@@ -94,6 +92,7 @@ namespace Ped
 
             // double diffX = destination->getx() - x;
             diffX = _mm_sub_ps(t0, XPOS);
+            // double diffY = destination->gety() - y;
             diffY = _mm_sub_ps(t1, YPOS);
             // sqrt(diffX * diffX + diffY * diffY)
             t0 = _mm_mul_ps(diffX, diffX);
@@ -101,35 +100,28 @@ namespace Ped
             len = _mm_add_ps(t0, t1);
             len = _mm_sqrt_ps(len);
     
-            // Check whether position is reached and if so update destination
-            
-            float storeX[4];
-            _mm_store_ps(storeX, len); // store length in storeX
-            // update_dest(storeX[0], agents[i+0], i+0);
-            // update_dest(storeX[1], agents[i+1], i+1);
-            // update_dest(storeX[2], agents[i+2], i+2);
-            // update_dest(storeX[3], agents[i+3], i+3);
-            
             //desiredPositionX = (int)round(x + diffX / len);
             diffX = _mm_div_ps(diffX, len);
             XPOS  = _mm_add_ps(XPOS, diffX);
             //desiredPositionY = (int)round(y + diffY / len);
-            diffY  = _mm_div_ps(t1, len);
+            diffY  = _mm_div_ps(diffY, len);
             YPOS   = _mm_add_ps(YPOS, diffY);
 
             // Store the values back
             _mm_store_ps(&xPos[i], XPOS);
             _mm_store_ps(&yPos[i], YPOS);
 
-            // Store x and y in agents - however this is bad and slow!
-            agents[i + 0]->setX((int) round(xPos[i + 0]));
-            agents[i + 1]->setX((int) round(xPos[i + 1]));
-            agents[i + 2]->setX((int) round(xPos[i + 2]));
-            agents[i + 3]->setX((int) round(xPos[i + 3]));
-            agents[i + 0]->setY((int) round(yPos[i + 0]));
-            agents[i + 1]->setY((int) round(yPos[i + 1]));
-            agents[i + 2]->setY((int) round(yPos[i + 2]));
-            agents[i + 3]->setY((int) round(yPos[i + 3]));
+            // Store x and y in agents. TODO: however this is bad and slow!
+            // The proper way to do this is the paint() function inside the mainWindow
+            for (int j = 0; j < 4; j++) 
+            {
+                if ((i+j) < agents.size() )
+                {
+                    agents[i + j]->setX((int) round(xPos[i + j]));
+                    agents[i + j]->setY((int) round(yPos[i + j]));
+
+                }
+            }
         }
     }
     
