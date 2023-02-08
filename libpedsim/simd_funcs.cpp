@@ -36,11 +36,11 @@ namespace Ped
 
     int Simd_funcs::getPositionX(int agentN)
     {
-        return (int) round(xPos[agentN]);
+        return (int) xPos[agentN];
     }
     int Simd_funcs::getPositionY(int agentN)
     {
-        return (int) round(yPos[agentN]);
+        return (int) yPos[agentN];
     }
 
     void Simd_funcs::update_pos()
@@ -87,10 +87,12 @@ namespace Ped
             //desiredPositionX = (int)round(x + diffX / len);
             diffX = _mm_div_ps(diffX, len);
             XPOS  = _mm_add_ps(XPOS, diffX);
+            XPOS  = _mm_round_ps(XPOS, _MM_FROUND_TO_NEAREST_INT);
             //desiredPositionY = (int)round(y + diffY / len);
             diffY  = _mm_div_ps(diffY, len);
             YPOS   = _mm_add_ps(YPOS, diffY);
-
+            YPOS  = _mm_round_ps(YPOS, _MM_FROUND_TO_NEAREST_INT);
+            
             // Store the values back
             _mm_store_ps(&xPos[i], XPOS);
             _mm_store_ps(&yPos[i], YPOS);

@@ -1,4 +1,5 @@
-#include <emmintrin.h>
+//#include <emmintrin.h>
+#include <smmintrin.h>
 #include "ped_agent.h"
 #include "ped_waypoint.h"
 
