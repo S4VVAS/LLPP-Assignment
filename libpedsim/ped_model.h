@@ -17,6 +17,7 @@
 
 #include "ped_agent.h"
 #include "simd_funcs.h"
+#include "gpu_funcs.h"
 
 namespace Ped{
 	class Tagent;
@@ -35,7 +36,7 @@ namespace Ped{
 		// Coordinates a time step in the scenario: move all agents by one step (if applicable).
 		void tick();
 
-		Simd_funcs *SIMD; //TODO SIMD is declared here!
+		Simd_funcs *SIMD; 
 
 		// Returns the agents of this scenario
 		const std::vector<Tagent*> getAgents() const { return agents; };
@@ -66,6 +67,8 @@ namespace Ped{
 
 		// Moves an agent towards its next position
 		void move(Ped::Tagent *agent);
+
+		Gpu_funcs *gpu_funcs;
 
 		////////////
 		/// Everything below here won't be relevant until Assignment 3

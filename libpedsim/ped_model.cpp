@@ -15,8 +15,6 @@
 #include <omp.h>
 #include <thread>
 #include <pthread.h>
-#define NUM_BLOCKS 4
-#define BLOCK_WIDTH 32
 
 
 #include <stdlib.h>
@@ -41,6 +39,9 @@ void Ped::Model::setup(std::vector<Ped::Tagent*> agentsInScenario, std::vector<T
 	SIMD = NULL;
 	if (implementation == Ped::VECTOR)
 		SIMD = new Simd_funcs(agents);
+	
+	if (implementation == Ped::CUDA)
+		gpu_funcs = new Gpu_funcs(agents);
 }
 
 struct args 
@@ -121,6 +122,7 @@ void Ped::Model::tick()
 			 break;
 		}
 		case Ped::CUDA : {
+			gpu_funcs->update_pos();
 			
 			break;
 			}

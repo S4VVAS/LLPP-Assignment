@@ -53,18 +53,23 @@ int main(int argc, char*argv[]) {
 			}
 			else if (strcmp(&argv[i][2], "omp") == 0)
 			{
-			cout << "Using OpenMP\n";
-			implementation_to_test = Ped::OMP;
+				cout << "Using OpenMP\n";
+				implementation_to_test = Ped::OMP;
 			}
 			else if (strcmp(&argv[i][2], "pthread") == 0)
 			{
-			cout << "Using pthread\n";
-			implementation_to_test = Ped::PTHREAD;
+				cout << "Using pthread\n";
+				implementation_to_test = Ped::PTHREAD;
 			}
 			else if (strcmp(&argv[i][2], "vector") == 0)
 			{
-			cout << "Using vector/SIMD\n";
-			implementation_to_test = Ped::VECTOR;
+				cout << "Using vector/SIMD\n";
+				implementation_to_test = Ped::VECTOR;
+			}
+			else if (strcmp(&argv[i][2], "cuda") == 0)
+			{
+				cout << "Using CUDA\n";
+				implementation_to_test = Ped::CUDA;
 			}
 			else
 			{
