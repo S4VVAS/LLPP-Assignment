@@ -33,6 +33,9 @@ namespace Ped {
 		int getDesiredX() const { return desiredPositionX; }
 		int getDesiredY() const { return desiredPositionY; }
 
+		Twaypoint *getDestination();
+		Twaypoint *changeDestination(); 
+
 		// Sets the agent's position
 		void setX(int newX) { x = newX; }
 		void setY(int newY) { y = newY; }
@@ -40,6 +43,12 @@ namespace Ped {
 		// Update the position according to get closer
 		// to the current destination
 		void computeNextDesiredPosition();
+
+		// Returns the next destination to visit
+		Twaypoint* getNextDestination();
+
+		// Returns the next destination to visit using SIMD calculations
+		Twaypoint* getNextDestinationSIMD(float length); 
 
 		// Position of agent defined by x and y
 		int getX() const { return x; };
@@ -71,8 +80,9 @@ namespace Ped {
 		// Internal init function 
 		void init(int posX, int posY);
 
+		// TODO: Original position!
 		// Returns the next destination to visit
-		Twaypoint* getNextDestination();
+		// Twaypoint* getNextDestination();
 	};
 }
 

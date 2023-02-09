@@ -15,6 +15,9 @@
 #include <omp.h>
 #include <thread>
 #include <pthread.h>
+#define NUM_BLOCKS 4
+#define BLOCK_WIDTH 32
+
 
 #include <stdlib.h>
 
@@ -34,6 +37,10 @@ void Ped::Model::setup(std::vector<Ped::Tagent*> agentsInScenario, std::vector<T
 
 	// Set up heatmap (relevant for Assignment 4)
 	setupHeatmapSeq();
+
+	SIMD = NULL;
+	if (implementation == Ped::VECTOR)
+		SIMD = new Simd_funcs(agents);
 }
 
 struct args 
@@ -112,8 +119,17 @@ void Ped::Model::tick()
 			}
 				 
 			 break;
+		}
+		case Ped::CUDA : {
+			
+			break;
 			}
-		case Ped::CUDA : {break;}
+		case Ped::VECTOR : 
+		{
+			SIMD->update_pos();
+
+			break;
+		}
 		case Ped::OMP : 
 		{
 			// - Uncomment to set n of threads
@@ -122,7 +138,6 @@ void Ped::Model::tick()
 			// We argue that we don't have to point out shared or private variables in this case
 			for ( Ped::Tagent* agent : agents)
 			{
-
 					agent->computeNextDesiredPosition();
 
 					agent->setX(agent->getDesiredX());

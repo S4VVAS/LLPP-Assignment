@@ -16,6 +16,7 @@
 #include <set>
 
 #include "ped_agent.h"
+#include "simd_funcs.h"
 
 namespace Ped{
 	class Tagent;
@@ -33,6 +34,8 @@ namespace Ped{
 		
 		// Coordinates a time step in the scenario: move all agents by one step (if applicable).
 		void tick();
+
+		Simd_funcs *SIMD; //TODO SIMD is declared here!
 
 		// Returns the agents of this scenario
 		const std::vector<Tagent*> getAgents() const { return agents; };
