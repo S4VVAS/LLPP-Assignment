@@ -4,6 +4,7 @@
 #include "ped_agent.h"
 #include "ped_waypoint.h"
 
+
 namespace Ped {
     class Gpu_funcs {
         public:
@@ -23,7 +24,6 @@ namespace Ped {
             float *d_length; 
             int bytes;
             std::vector<Ped::Tagent*> agents;
-
     };
 }
 

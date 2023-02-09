@@ -2,7 +2,10 @@
 #include "gpu_kernel.h"
 #include "cuda_runtime.h"
 #include "device_launch_parameters.h"
+
 #include <cstdlib>
+cudaStream_t stream1;
+cudaStream_t stream2;
 
 namespace Ped
 {
@@ -11,11 +14,12 @@ namespace Ped
         agents = startAgents;
         bytes = sizeof(float) * agents.size();
         
-        xPos   = (float*) malloc(bytes);
-        yPos   = (float*) malloc(bytes);
-        xDest  = (float*) malloc(bytes);
-        yDest  = (float*) malloc(bytes);
-        length = (float*) malloc(bytes);
+        // Init host data
+        cudaMallocHost((void**)&xDest, bytes);
+        cudaMallocHost((void**)&yDest, bytes);
+        cudaMallocHost((void**)&xPos, bytes);
+        cudaMallocHost((void**)&yPos, bytes);
+        cudaMallocHost((void**)&length, bytes);
 
         // Set up the start-positions and start destinations
         for (int i = 0; i <  agents.size(); i++)
@@ -41,6 +45,10 @@ namespace Ped
         cudaMemcpy(d_yPos,  yPos,  bytes, cudaMemcpyHostToDevice);
         cudaMemcpy(d_xDest, xDest, bytes, cudaMemcpyHostToDevice);
         cudaMemcpy(d_yDest, yDest, bytes, cudaMemcpyHostToDevice);
+
+        // Setting up streams
+        cudaStreamCreate(&stream1);
+        cudaStreamCreate(&stream2);
     }
 
     void Gpu_funcs::update_pos()
@@ -49,10 +57,12 @@ namespace Ped
         cudamain(d_xPos, d_yPos, d_xDest, d_yDest, d_length, agents.size());
 
         // Move data back to main memory
-        cudaMemcpy(xPos,   d_xPos,    bytes, cudaMemcpyDeviceToHost);
-        cudaMemcpy(yPos,   d_yPos,    bytes, cudaMemcpyDeviceToHost);
-        cudaMemcpy(length, d_length,  bytes, cudaMemcpyDeviceToHost);
+        cudaMemcpyAsync(length, d_length,  bytes, cudaMemcpyDeviceToHost, stream1);
+        cudaMemcpyAsync(xPos,   d_xPos,    bytes, cudaMemcpyDeviceToHost, stream2);
+        cudaMemcpyAsync(yPos,   d_yPos,    bytes, cudaMemcpyDeviceToHost, stream2);
         
+        cudaStreamSynchronize(stream1);
+
         #pragma omp parallel for
         for (int i = 0; i < agents.size(); i++)
         {
@@ -63,12 +73,22 @@ namespace Ped
                 xDest[i] = (float) waypoint->getx();
                 yDest[i] = (float) waypoint->gety();
             }
+        }
+       
+        // Move new destination information to graphics memory
+        cudaMemcpyAsync(d_xDest, xDest, bytes, cudaMemcpyHostToDevice, stream1);
+        cudaMemcpyAsync(d_yDest, yDest, bytes, cudaMemcpyHostToDevice, stream1);
+        
+        cudaStreamSynchronize(stream2);
+
+        #pragma omp parallel for
+        for (int i = 0; i < agents.size(); i++)
+        {
             agents[i]->setX((int) xPos[i]);
             agents[i]->setY((int) yPos[i]);
         }
+
+        cudaStreamSynchronize(stream1);
     
-        // Move new destination information to graphics memory
-        cudaMemcpy(d_xDest, xDest, bytes, cudaMemcpyHostToDevice);
-        cudaMemcpy(d_yDest, yDest, bytes, cudaMemcpyHostToDevice);
     }
 }
