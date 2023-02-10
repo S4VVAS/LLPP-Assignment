@@ -66,7 +66,7 @@ void *moveAgent(void *input)
 }
 
 
-int const tNum = 10; // Number of threads
+int const tNum = 8; // Number of threads
 
 void Ped::Model::tick()
 {
