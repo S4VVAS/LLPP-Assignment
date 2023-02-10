@@ -9,7 +9,6 @@ namespace Ped
     Simd_funcs::Simd_funcs(std::vector<Ped::Tagent*> startAgents)
     {
         agents = startAgents;
-        std::cout << "Creating\n";
 
         // This results in a aligned size that is alwayds dividable with 4.
         // If agents.size() = 21 we will have 3 extra cells of padding resulting in 24.
@@ -57,6 +56,9 @@ namespace Ped
             desiredPositionY = (int)round(y + diffY / len);
         
         */
+
+        // UNCOMMENT BELOW TO USE SIMD + OMP
+        //#pragma omp parallel for
         for (int i = 0; i < agents.size(); i += SIMD_SIZE)
         {
             // Set-up SSE-variables

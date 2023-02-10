@@ -44,7 +44,7 @@ MainWindow::MainWindow(const Ped::Model &pedModel) : model(pedModel)
 	int agentN = 0;
 	for (it = agents.begin(); it != agents.end(); it++)
 	{
-		viewAgents.push_back(new ViewAgent(*it, scene, agentN++, model.SIMD));
+		viewAgents.push_back(new ViewAgent(*it, scene, agentN++));
 	}
 
 	const int heatmapSize = model.getHeatmapSize();
@@ -81,7 +81,7 @@ void MainWindow::paint() {
 			color = Qt::red;
 		}
 
-		(*it)->paint(color);
+		(*it)->paint(color, model.SIMD);
 	}
 }
 

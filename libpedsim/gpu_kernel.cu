@@ -2,8 +2,8 @@
 #include "cuda_runtime.h"
 #include "device_launch_parameters.h"
 
-#define BLOCK_WIDTH 256
-#define N_BLOCKS 2
+#define BLOCK_WIDTH 128
+#define N_BLOCKS 4
 
 __global__ void cuda_update(
     float *d_xPos, 
@@ -22,11 +22,13 @@ __global__ void cuda_update(
         int core = (i * (threadIdx.x + BLOCK_WIDTH * blockIdx.x));
         if (core >= size)
             return; 
-        float diffX = d_xDest[core] - d_xPos[core];
-        float diffY = d_yDest[core] - d_yPos[core];
+        int x = d_xPos[core];
+        int y = d_yPos[core];
+        float diffX = d_xDest[core] - x;
+        float diffY = d_yDest[core] - y;
         float len = sqrt(diffX * diffX + diffY * diffY);
-        d_xPos[core] = round(d_xPos[core] + diffX / len);
-        d_yPos[core] = round(d_yPos[core] + diffY / len);
+        d_xPos[core] = round(x + diffX / len);
+        d_yPos[core] = round(y + diffY / len);
         d_length[core] = len;
     }
 }
