@@ -113,9 +113,9 @@ void Ped::Model::tick()
 			 {
     
 				agent->computeNextDesiredPosition();
-
-				agent->setX(agent->getDesiredX());
-				agent->setY(agent->getDesiredY());
+				move(agent);
+				//agent->setX(agent->getDesiredX());
+				//agent->setY(agent->getDesiredY());
 
 			}
 				 
@@ -218,8 +218,19 @@ void Ped::Model::move(Ped::Tagent *agent)
 set<const Ped::Tagent*> Ped::Model::getNeighbors(int x, int y, int dist) const {
 
 	// create the output list
+	
+	// OLD TERRIBLE VERSION
 	// ( It would be better to include only the agents close by, but this programmer is lazy.)	
-	return set<const Ped::Tagent*>(agents.begin(), agents.end());
+	//return set<const Ped::Tagent*>(agents.begin(), agents.end());
+	
+	// HOW THE IMPLEMENTATION SHOULD BE
+	set<const Ped::Tagent*> neighbors;d
+	for ( Ped::Tagent* agent : agents)
+	{
+		if (abs(agent->getX() - x) < dist && abs(agent->getY() - y) < dist)
+			neighbors.insert(agent);
+	}		
+	return neighbors;
 }
 
 void Ped::Model::cleanup() {
