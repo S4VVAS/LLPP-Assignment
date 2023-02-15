@@ -16,11 +16,13 @@
 #include <set>
 
 #include "ped_agent.h"
+#include "ped_region.h"
 #include "simd_funcs.h"
 #include "gpu_funcs.h"
 
 namespace Ped{
 	class Tagent;
+	class region;
 
 	// The implementation modes for Assignment 1 + 2:
 	// chooses which implementation to use for tick()
@@ -64,6 +66,9 @@ namespace Ped{
 
 		// The waypoints in this scenario
 		std::vector<Twaypoint*> destinations;
+
+		// Regions to divide view 
+		std::vector<region*> regions; 
 
 		// Moves an agent towards its next position
 		void move(Ped::Tagent *agent);

@@ -7,7 +7,6 @@
 //
 #include "ped_model.h"
 #include "ped_waypoint.h"
-#include "ped_model.h"
 #include <iostream>
 #include <stack>
 #include <algorithm>
@@ -15,10 +14,14 @@
 #include <omp.h>
 #include <thread>
 #include <pthread.h>
-
 #include <stdlib.h>
 
+#define SCREEN_WIDTH 800
+#define SCREEN_HEIGHT 600
+
+// TODO: Move these two into the class definitions!
 bool COLLISIONS = false;
+unsigned int n_regions = 4;
 
 void Ped::Model::setup(std::vector<Ped::Tagent*> agentsInScenario, std::vector<Twaypoint*> destinationsInScenario, IMPLEMENTATION implementation, bool collisions)
 {
@@ -34,6 +37,25 @@ void Ped::Model::setup(std::vector<Ped::Tagent*> agentsInScenario, std::vector<T
 	// Sets the chosen implemenation. Standard in the given code is SEQ
 	this->implementation = implementation;
 	COLLISIONS = collisions;
+
+	if (COLLISIONS)
+	{
+		// Create regions
+		unsigned int xRegions = n_regions / 2; // How many regions in x-coordinate
+		unsigned int yRegions = n_regions / 2; // How many regions in y-coordinate
+		// Divide screen into regions in width (x) and height (y)
+		for (int i = 0; i < xRegions; i++)
+		{
+			for (int j = 0; j < yRegions; j++)
+			{
+				regions.push_back(new Ped::region(
+					i*(SCREEN_WIDTH / xRegions),
+					(i+1)*(SCREEN_WIDTH / yRegions),
+					j*(SCREEN_HEIGHT / xRegions),
+					(j+1)*(SCREEN_HEIGHT / yRegions)));
+			}
+		}
+	}
 
 	//this->usingCollisions = usingCollisions; // TODO:
 

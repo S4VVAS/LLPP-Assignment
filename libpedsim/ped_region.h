@@ -3,6 +3,7 @@
 
 #include "ped_model.h"
 #include <stack>
+#include <vector>
 //#include <stdatomic.h>
 
 namespace Ped
@@ -10,10 +11,10 @@ namespace Ped
     class region
     {
         public:
-            region();
-            bool update_position(Tagent agent, int x, int y);
-            bool add(Tagent agent, int x, int y);
-            bool remove(Tagent agent);
+            region(int x1, int x2, int y1, int y2);
+            bool update_position(Tagent *agent, int x, int y);
+            bool add(Tagent *agent);
+            bool remove(Tagent *agent);
 
         private:
             //std::_Atomic int counter;
