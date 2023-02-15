@@ -35,6 +35,7 @@ int main(int argc, char*argv[]) {
 	int i = 1;
 	QString scenefile = "scenario.xml";
 	Ped::IMPLEMENTATION implementation_to_test = Ped::SEQ;
+	bool usingCollisions = false;
 
 	// Argument handling
 	while (i < argc)
@@ -70,6 +71,11 @@ int main(int argc, char*argv[]) {
 			{
 				cout << "Using CUDA\n";
 				implementation_to_test = Ped::CUDA;
+			}
+			else if (strcmp(&argv[i][2], "col") == 0)
+			{
+				cout << "Using collisions\n";
+				usingCollisions = true;
 			}
 			else
 			{

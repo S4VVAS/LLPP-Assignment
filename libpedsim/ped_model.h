@@ -31,12 +31,13 @@ namespace Ped{
 	public:
 
 		// Sets everything up
-		void setup(std::vector<Tagent*> agentsInScenario, std::vector<Twaypoint*> destinationsInScenario,IMPLEMENTATION implementation);
+		void setup(std::vector<Tagent*> agentsInScenario, std::vector<Twaypoint*> destinationsInScenario,IMPLEMENTATION implementation, bool usingCollisions);
 		
 		// Coordinates a time step in the scenario: move all agents by one step (if applicable).
 		void tick();
 
 		Simd_funcs *SIMD; 
+		Gpu_funcs *gpu_funcs;
 
 		// Returns the agents of this scenario
 		const std::vector<Tagent*> getAgents() const { return agents; };
@@ -68,7 +69,8 @@ namespace Ped{
 		// Moves an agent towards its next position
 		void move(Ped::Tagent *agent);
 
-		Gpu_funcs *gpu_funcs;
+		// TODO: Ersätt med träd
+		std::vector<region*> regions;
 
 		////////////
 		/// Everything below here won't be relevant until Assignment 3

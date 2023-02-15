@@ -224,7 +224,7 @@ set<const Ped::Tagent*> Ped::Model::getNeighbors(int x, int y, int dist) const {
 	//return set<const Ped::Tagent*>(agents.begin(), agents.end());
 	
 	// HOW THE IMPLEMENTATION SHOULD BE
-	set<const Ped::Tagent*> neighbors;d
+	set<const Ped::Tagent*> neighbors;
 	for ( Ped::Tagent* agent : agents)
 	{
 		if (abs(agent->getX() - x) < dist && abs(agent->getY() - y) < dist)
