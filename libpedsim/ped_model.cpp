@@ -16,10 +16,11 @@
 #include <thread>
 #include <pthread.h>
 
-
 #include <stdlib.h>
 
-void Ped::Model::setup(std::vector<Ped::Tagent*> agentsInScenario, std::vector<Twaypoint*> destinationsInScenario, IMPLEMENTATION implementation)
+bool COLLISIONS = false;
+
+void Ped::Model::setup(std::vector<Ped::Tagent*> agentsInScenario, std::vector<Twaypoint*> destinationsInScenario, IMPLEMENTATION implementation, bool collisions)
 {
 	// Convenience test: does CUDA work on this machine?
 	cuda_test();
@@ -32,6 +33,9 @@ void Ped::Model::setup(std::vector<Ped::Tagent*> agentsInScenario, std::vector<T
 
 	// Sets the chosen implemenation. Standard in the given code is SEQ
 	this->implementation = implementation;
+	COLLISIONS = collisions;
+
+	//this->usingCollisions = usingCollisions; // TODO:
 
 	// Set up heatmap (relevant for Assignment 4)
 	setupHeatmapSeq();
@@ -111,11 +115,17 @@ void Ped::Model::tick()
 		{
 			 for ( Ped::Tagent* agent : agents)
 			 {
-    
-				agent->computeNextDesiredPosition();
+				 agent->computeNextDesiredPosition();
+				 if (COLLISIONS)
+				 {
+					 move(agent);
+				 }
+				 else
+				 {
+					 agent->setX(agent->getDesiredX());
+					 agent->setY(agent->getDesiredY());
+				 }
 
-				agent->setX(agent->getDesiredX());
-				agent->setY(agent->getDesiredY());
 
 			}
 				 
@@ -218,8 +228,19 @@ void Ped::Model::move(Ped::Tagent *agent)
 set<const Ped::Tagent*> Ped::Model::getNeighbors(int x, int y, int dist) const {
 
 	// create the output list
+	
+	// OLD TERRIBLE VERSION
 	// ( It would be better to include only the agents close by, but this programmer is lazy.)	
-	return set<const Ped::Tagent*>(agents.begin(), agents.end());
+	//return set<const Ped::Tagent*>(agents.begin(), agents.end());
+	
+	// HOW THE IMPLEMENTATION SHOULD BE
+	set<const Ped::Tagent*> neighbors;
+	for ( Ped::Tagent* agent : agents)
+	{
+		if (abs(agent->getX() - x) < dist && abs(agent->getY() - y) < dist)
+			neighbors.insert(agent);
+	}		
+	return neighbors;
 }
 
 void Ped::Model::cleanup() {
