@@ -16,6 +16,7 @@
 #include <set>
 
 #include "ped_agent.h"
+#include "ped_region.h"
 #include "simd_funcs.h"
 #include "gpu_funcs.h"
 
@@ -59,6 +60,9 @@ namespace Ped{
 		// should be used for calculating the desired positions of
 		// agents (Assignment 1)
 		IMPLEMENTATION implementation;
+
+		// Whether we're using collisions (in assignment > 2)
+		//bool usingCollisions; // TODO
 
 		// The agents in this scenario
 		std::vector<Tagent*> agents;
