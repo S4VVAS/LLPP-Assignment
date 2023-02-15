@@ -16,7 +16,6 @@
 #include <set>
 
 #include "ped_agent.h"
-#include "ped_region.h"
 #include "simd_funcs.h"
 #include "gpu_funcs.h"
 
@@ -32,13 +31,12 @@ namespace Ped{
 	public:
 
 		// Sets everything up
-		void setup(std::vector<Tagent*> agentsInScenario, std::vector<Twaypoint*> destinationsInScenario,IMPLEMENTATION implementation, bool usingCollisions);
-		
+		void setup(std::vector<Tagent*> agentsInScenario, std::vector<Twaypoint*> destinationsInScenario,IMPLEMENTATION implementation, bool collisions);
+
 		// Coordinates a time step in the scenario: move all agents by one step (if applicable).
 		void tick();
 
-		Simd_funcs *SIMD; 
-		Gpu_funcs *gpu_funcs;
+		Simd_funcs *SIMD;
 
 		// Returns the agents of this scenario
 		const std::vector<Tagent*> getAgents() const { return agents; };
@@ -61,9 +59,6 @@ namespace Ped{
 		// agents (Assignment 1)
 		IMPLEMENTATION implementation;
 
-		// Whether we're using collisions (in assignment > 2)
-		//bool usingCollisions; // TODO
-
 		// The agents in this scenario
 		std::vector<Tagent*> agents;
 
@@ -73,8 +68,7 @@ namespace Ped{
 		// Moves an agent towards its next position
 		void move(Ped::Tagent *agent);
 
-		// TODO: Ersätt med träd
-		std::vector<region*> regions;
+		Gpu_funcs *gpu_funcs;
 
 		////////////
 		/// Everything below here won't be relevant until Assignment 3

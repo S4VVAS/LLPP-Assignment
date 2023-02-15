@@ -1,8 +1,7 @@
-
 ///////////////////////////////////////////////////
 // Low Level Parallel Programming 2017.
 //
-// 
+//
 //
 // The main starting point for the crowd simulation.
 //
@@ -35,7 +34,7 @@ int main(int argc, char*argv[]) {
 	int i = 1;
 	QString scenefile = "scenario.xml";
 	Ped::IMPLEMENTATION implementation_to_test = Ped::SEQ;
-	bool usingCollisions = false;
+	bool collisions = false;
 
 	// Argument handling
 	while (i < argc)
@@ -75,7 +74,8 @@ int main(int argc, char*argv[]) {
 			else if (strcmp(&argv[i][2], "col") == 0)
 			{
 				cout << "Using collisions\n";
-				usingCollisions = true;
+				collisions = true;
+
 			}
 			else
 			{
@@ -95,12 +95,12 @@ int main(int argc, char*argv[]) {
 		// Reading the scenario file and setting up the crowd simulation model
 		Ped::Model model;
 		ParseScenario parser(scenefile);
-		model.setup(parser.getAgents(), parser.getWaypoints(), implementation_to_test, usingCollisions);
+		model.setup(parser.getAgents(), parser.getWaypoints(), implementation_to_test, collisions);
 
 		// Default number of steps to simulate. Feel free to change this.
 		const int maxNumberOfStepsToSimulate = 100000;
-		
-				
+
+
 
 		// Timing version
 		// Run twice, without the gui, to compare the runtimes.
@@ -114,7 +114,7 @@ int main(int argc, char*argv[]) {
 			{
 				Ped::Model model;
 				ParseScenario parser(scenefile);
-				model.setup(parser.getAgents(), parser.getWaypoints(), Ped::SEQ, usingCollisions);
+				model.setup(parser.getAgents(), parser.getWaypoints(), Ped::SEQ, collisions);
 				PedSimulation simulation(model, NULL, timing_mode);
 				// Simulation mode to use when profiling (without any GUI)
 				std::cout << "Running reference version...\n";
@@ -125,12 +125,12 @@ int main(int argc, char*argv[]) {
 				cout << "Reference time: " << duration_seq.count() << " milliseconds, " << fps_seq << " Frames Per Second." << std::endl;
 			}
 
-			// Change this variable when testing different versions of your code. 
+			// Change this variable when testing different versions of your code.
 			// May need modification or extension in later assignments depending on your implementations
 			{
 				Ped::Model model;
 				ParseScenario parser(scenefile);
-				model.setup(parser.getAgents(), parser.getWaypoints(), implementation_to_test, usingCollisions);
+				model.setup(parser.getAgents(), parser.getWaypoints(), implementation_to_test, collisions);
 				PedSimulation simulation(model, NULL, timing_mode);
 				// Simulation mode to use when profiling (without any GUI)
 				std::cout << "Running target version...\n";
@@ -141,8 +141,8 @@ int main(int argc, char*argv[]) {
 				cout << "Target time: " << duration_target.count() << " milliseconds, " << fps_target << " Frames Per Second." << std::endl;
 			}
 			std::cout << "\n\nSpeedup: " << fps_target / fps_seq << std::endl;
-			
-			
+
+
 
 		}
 		// Graphics version
@@ -164,12 +164,12 @@ int main(int argc, char*argv[]) {
 			auto duration = std::chrono::duration_cast<std::chrono::milliseconds> (std::chrono::steady_clock::now() - start);
 			float fps = ((float)simulation.getTickCount()) / ((float)duration.count())*1000.0;
 			cout << "Time: " << duration.count() << " milliseconds, " << fps << " Frames Per Second." << std::endl;
-			
+
 		}
 
-		
 
-		
+
+
 	}
 
 	cout << "Done" << endl;
