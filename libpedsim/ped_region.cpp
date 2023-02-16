@@ -17,8 +17,7 @@ bool Ped::region::update_position(Ped::Tagent *agent, int x, int y)
 
 bool Ped::region::add(Ped::Tagent *agent)
 {
-    if (agent->getX() >= x1 && agent->getX() < x2 &&
-		agent->getY() >= y1 && agent->getY() < y2)
+    if (isInRegion(agent->getX(), agent->getY()))
         {
             agents.push_back(agent);
             return true;
@@ -34,4 +33,12 @@ bool Ped::region::remove(Ped::Tagent *agent)
 std::vector<Ped::Tagent*> Ped::region::getAgents()
 {
     return agents;
+}
+
+bool Ped::region::isInRegion(int x, int y)
+{
+    if (x >= x1 && x < x2 &&
+		y >= y1 && y < y2)
+        return true;
+    return false;
 }

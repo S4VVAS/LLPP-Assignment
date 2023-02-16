@@ -182,7 +182,8 @@ void Ped::Model::tick()
 					{
 						#pragma omp single
 						{
-							
+							// Treat each region as it's own task,
+							// don't start a task for empty regions.
 							for (Ped::region *r : regions)
 							{
 								std::vector<Tagent*> v = r->getAgents();
