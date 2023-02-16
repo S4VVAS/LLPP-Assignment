@@ -16,8 +16,8 @@
 #include <pthread.h>
 #include <stdlib.h>
 
-#define SCREEN_WIDTH 800
-#define SCREEN_HEIGHT 600
+#define SCREEN_WIDTH 160
+#define SCREEN_HEIGHT 120
 
 // TODO: Move these two into the class definitions!
 bool COLLISIONS = false;
@@ -48,16 +48,20 @@ void Ped::Model::setup(std::vector<Ped::Tagent*> agentsInScenario, std::vector<T
 		{
 			for (int j = 0; j < yRegions; j++)
 			{
-				regions.push_back(new Ped::region(
-					i*(SCREEN_WIDTH / xRegions),
-					(i+1)*(SCREEN_WIDTH / yRegions),
-					j*(SCREEN_HEIGHT / xRegions),
-					(j+1)*(SCREEN_HEIGHT / yRegions)));
+				int x1 = i*(SCREEN_WIDTH / xRegions);
+				int x2 = (i+1)*(SCREEN_WIDTH / xRegions); 
+				int y1 = j*(SCREEN_HEIGHT / yRegions);
+				int y2 = (j+1)*(SCREEN_HEIGHT / yRegions);
+				Ped::region *r = new Ped::region(x1,x2,y1,y2);
+				int k = 0;
+				for (Ped::Tagent* agent : agents) 
+				{
+					r->add(agent);
+				}
+				regions.push_back(r);
 			}
 		}
 	}
-
-	//this->usingCollisions = usingCollisions; // TODO:
 
 	// Set up heatmap (relevant for Assignment 4)
 	setupHeatmapSeq();
@@ -166,17 +170,42 @@ void Ped::Model::tick()
 		}
 		case Ped::OMP : 
 		{
-			// - Uncomment to set n of threads
-			//omp_set_num_threads(8);
-			#pragma omp parallel for
-			// We argue that we don't have to point out shared or private variables in this case
-			for ( Ped::Tagent* agent : agents)
-			{
-					agent->computeNextDesiredPosition();
+			if (COLLISIONS)
+				 {
+					#pragma omp parallel
+					{
+						#pragma omp single
+						{
+							
+							for (Ped::region *r : regions)
+							{
+								std::vector<Tagent*> v = r->getAgents();
+								if (v.size() > 0)
+								#pragma omp task
+								{
+									for (Ped::Tagent* agent : v)
+									{
+										agent->computeNextDesiredPosition();
+										move(agent);
+									}		
 
-					agent->setX(agent->getDesiredX());
-					agent->setY(agent->getDesiredY());
-			}		
+								}
+							}
+							#pragma omp taskwait
+						}	
+					}
+				 }
+				 else
+				 {
+					#pragma omp parallel for
+					for (Ped::Tagent* agent : agents)
+					{
+						agent->computeNextDesiredPosition();
+						agent->setX(agent->getDesiredX());
+						agent->setY(agent->getDesiredY());
+					}		
+				}
+			// We argue that we don't have to point out shared or private variables in this case
 			break;
 		}
 	}

@@ -8,6 +8,8 @@
 
 namespace Ped
 {
+    class Tagent;
+    
     class region
     {
         public:
@@ -15,11 +17,12 @@ namespace Ped
             bool update_position(Tagent *agent, int x, int y);
             bool add(Tagent *agent);
             bool remove(Tagent *agent);
+            std::vector<Tagent*> getAgents();
 
         private:
             //std::_Atomic int counter;
-            stack<Tagent*> *incoming;
-            //std::vector<Tagent*> agents;
+            stack<Tagent*> incoming;
+            std::vector<Tagent*> agents;
             //std::hash
             int x1;
             int x2;
