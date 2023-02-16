@@ -36,32 +36,11 @@ void Ped::Model::setup(std::vector<Ped::Tagent*> agentsInScenario, std::vector<T
 
 	// Sets the chosen implemenation. Standard in the given code is SEQ
 	this->implementation = implementation;
+	
+	// Check whether to use collisions (assignment 3)
 	COLLISIONS = collisions;
-
 	if (COLLISIONS)
-	{
-		// Create regions
-		unsigned int xRegions = n_regions / 2; // How many regions in x-coordinate
-		unsigned int yRegions = n_regions / 2; // How many regions in y-coordinate
-		// Divide screen into regions in width (x) and height (y)
-		for (int i = 0; i < xRegions; i++)
-		{
-			for (int j = 0; j < yRegions; j++)
-			{
-				int x1 = i*(SCREEN_WIDTH / xRegions);
-				int x2 = (i+1)*(SCREEN_WIDTH / xRegions); 
-				int y1 = j*(SCREEN_HEIGHT / yRegions);
-				int y2 = (j+1)*(SCREEN_HEIGHT / yRegions);
-				Ped::region *r = new Ped::region(x1,x2,y1,y2);
-				int k = 0;
-				for (Ped::Tagent* agent : agents) 
-				{
-					r->add(agent);
-				}
-				regions.push_back(r);
-			}
-		}
-	}
+		setupRegions();
 
 	// Set up heatmap (relevant for Assignment 4)
 	setupHeatmapSeq();
@@ -74,6 +53,32 @@ void Ped::Model::setup(std::vector<Ped::Tagent*> agentsInScenario, std::vector<T
 		gpu_funcs = new Gpu_funcs(agents);
 }
 
+// Set up regions for assigment 3
+void Ped::Model::setupRegions()
+{
+	// Create regions
+	unsigned int xRegions = n_regions / 2; // How many regions in x-coordinate
+	unsigned int yRegions = n_regions / 2; // How many regions in y-coordinate
+	// Divide screen into regions in width (x) and height (y)
+	for (int i = 0; i < xRegions; i++)
+	{
+		for (int j = 0; j < yRegions; j++)
+		{
+			// Get coordinates for each region
+			int x1 = i*(SCREEN_WIDTH / xRegions);
+			int x2 = (i+1)*(SCREEN_WIDTH / xRegions); 
+			int y1 = j*(SCREEN_HEIGHT / yRegions);
+			int y2 = (j+1)*(SCREEN_HEIGHT / yRegions);
+			// Att region and fill it up with agents
+			Ped::region *r = new Ped::region(x1,x2,y1,y2);
+			int k = 0;
+			for (Ped::Tagent* agent : agents) { r->add(agent); }
+			regions.push_back(r);
+		}
+	}
+}
+
+// Argument bundle for Pthreads
 struct args 
 {
     int start;
@@ -81,6 +86,7 @@ struct args
 	std::vector<Ped::Tagent*> *agents;
 };
 
+// Move agents-task for Pthread-implementation
 void *moveAgent(void *input)
 {
 	struct args *args2 = (struct args*)input;
@@ -96,7 +102,7 @@ void *moveAgent(void *input)
 }
 
 
-int const tNum = 8; // Number of threads
+int const tNum = 8; // Number of threads for Pthreads
 
 void Ped::Model::tick()
 {
