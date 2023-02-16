@@ -54,6 +54,9 @@ namespace Ped {
 		int getX() const { return x; };
 		int getY() const { return y; };
 
+		int getRegion() const { return region;};
+		void setRegion(int n);
+
 		// Adds a new waypoint to reach for this agent
 		void addWaypoint(Twaypoint* wp);
 
@@ -67,6 +70,8 @@ namespace Ped {
 		// The agent's desired next position
 		int desiredPositionX;
 		int desiredPositionY;
+
+		int region;
 
 		// The current destination (may require several steps to reach)
 		Twaypoint* destination;

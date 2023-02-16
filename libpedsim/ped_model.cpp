@@ -71,8 +71,13 @@ void Ped::Model::setupRegions()
 			int y2 = (j+1)*(SCREEN_HEIGHT / yRegions);
 			// Att region and fill it up with agents
 			Ped::region *r = new Ped::region(x1,x2,y1,y2);
-			int k = 0;
-			for (Ped::Tagent* agent : agents) { r->add(agent); }
+			for (Ped::Tagent* agent : agents) 
+			{ 
+				// Add agents and assign to region
+				if (r->add(agent))
+					agent->setRegion(j+i*xRegions);
+
+			}
 			regions.push_back(r);
 		}
 	}
@@ -190,6 +195,10 @@ void Ped::Model::tick()
 								if (v.size() > 0)
 								#pragma omp task
 								{
+									// TODO: Make agent enter region
+									// ..
+
+									// Move each agent within a region
 									for (Ped::Tagent* agent : v)
 									{
 										agent->computeNextDesiredPosition();
