@@ -191,7 +191,7 @@ void Ped::Model::tick()
 							// don't start a task for empty regions.
 							for (Ped::region *r : regions)
 							{
-								std::vector<Tagent*> v = r->getAgents();
+								std::vector<Tagent*> v = r->getAgents(); // Agents within region
 								if (v.size() > 0)
 								#pragma omp task
 								{
@@ -202,7 +202,9 @@ void Ped::Model::tick()
 									for (Ped::Tagent* agent : v)
 									{
 										agent->computeNextDesiredPosition();
-										move(agent);
+										if (r->isInRegion(agent->getDesiredX(), agent->getDesiredY()))
+											move(agent);
+										// TODO: Else push to stack
 									}		
 
 								}
