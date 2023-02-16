@@ -45,6 +45,8 @@ void Ped::Tagent::addWaypoint(Twaypoint* wp) {
 	waypoints.push_back(wp);
 }
 
+void Ped::Tagent::setRegion(int n) {region = n;}
+
 Ped::Twaypoint* Ped::Tagent::getNextDestination() {
 	Ped::Twaypoint* nextDestination = NULL;
 	bool agentReachedDestination = false;
@@ -106,3 +108,4 @@ Ped::Twaypoint *Ped::Tagent::getDestination()
 {
 	return destination;
 }
+

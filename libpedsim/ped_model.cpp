@@ -7,7 +7,6 @@
 //
 #include "ped_model.h"
 #include "ped_waypoint.h"
-#include "ped_model.h"
 #include <iostream>
 #include <stack>
 #include <algorithm>
@@ -15,10 +14,14 @@
 #include <omp.h>
 #include <thread>
 #include <pthread.h>
-
 #include <stdlib.h>
 
+#define SCREEN_WIDTH 160
+#define SCREEN_HEIGHT 120
+
+// TODO: Move these two into the class definitions!
 bool COLLISIONS = false;
+unsigned int n_regions = 4;
 
 void Ped::Model::setup(std::vector<Ped::Tagent*> agentsInScenario, std::vector<Twaypoint*> destinationsInScenario, IMPLEMENTATION implementation, bool collisions)
 {
@@ -33,9 +36,11 @@ void Ped::Model::setup(std::vector<Ped::Tagent*> agentsInScenario, std::vector<T
 
 	// Sets the chosen implemenation. Standard in the given code is SEQ
 	this->implementation = implementation;
+	
+	// Check whether to use collisions (assignment 3)
 	COLLISIONS = collisions;
-
-	//this->usingCollisions = usingCollisions; // TODO:
+	if (COLLISIONS)
+		setupRegions();
 
 	// Set up heatmap (relevant for Assignment 4)
 	setupHeatmapSeq();
@@ -48,6 +53,37 @@ void Ped::Model::setup(std::vector<Ped::Tagent*> agentsInScenario, std::vector<T
 		gpu_funcs = new Gpu_funcs(agents);
 }
 
+// Set up regions for assigment 3
+void Ped::Model::setupRegions()
+{
+	// Create regions
+	unsigned int xRegions = n_regions / 2; // How many regions in x-coordinate
+	unsigned int yRegions = n_regions / 2; // How many regions in y-coordinate
+	// Divide screen into regions in width (x) and height (y)
+	for (int i = 0; i < xRegions; i++)
+	{
+		for (int j = 0; j < yRegions; j++)
+		{
+			// Get coordinates for each region
+			int x1 = i*(SCREEN_WIDTH / xRegions);
+			int x2 = (i+1)*(SCREEN_WIDTH / xRegions); 
+			int y1 = j*(SCREEN_HEIGHT / yRegions);
+			int y2 = (j+1)*(SCREEN_HEIGHT / yRegions);
+			// Att region and fill it up with agents
+			Ped::region *r = new Ped::region(x1,x2,y1,y2);
+			for (Ped::Tagent* agent : agents) 
+			{ 
+				// Add agents and assign to region
+				if (r->add(agent))
+					agent->setRegion(j+i*xRegions);
+
+			}
+			regions.push_back(r);
+		}
+	}
+}
+
+// Argument bundle for Pthreads
 struct args 
 {
     int start;
@@ -55,6 +91,7 @@ struct args
 	std::vector<Ped::Tagent*> *agents;
 };
 
+// Move agents-task for Pthread-implementation
 void *moveAgent(void *input)
 {
 	struct args *args2 = (struct args*)input;
@@ -70,7 +107,7 @@ void *moveAgent(void *input)
 }
 
 
-int const tNum = 8; // Number of threads
+int const tNum = 8; // Number of threads for Pthreads
 
 void Ped::Model::tick()
 {
@@ -144,17 +181,49 @@ void Ped::Model::tick()
 		}
 		case Ped::OMP : 
 		{
-			// - Uncomment to set n of threads
-			//omp_set_num_threads(8);
-			#pragma omp parallel for
-			// We argue that we don't have to point out shared or private variables in this case
-			for ( Ped::Tagent* agent : agents)
-			{
-					agent->computeNextDesiredPosition();
+			if (COLLISIONS)
+				 {
+					#pragma omp parallel
+					{
+						#pragma omp single
+						{
+							// Treat each region as it's own task,
+							// don't start a task for empty regions.
+							for (Ped::region *r : regions)
+							{
+								std::vector<Tagent*> v = r->getAgents(); // Agents within region
+								if (v.size() > 0)
+								#pragma omp task
+								{
+									// TODO: Make agent enter region
+									// ..
 
-					agent->setX(agent->getDesiredX());
-					agent->setY(agent->getDesiredY());
-			}		
+									// Move each agent within a region
+									for (Ped::Tagent* agent : v)
+									{
+										agent->computeNextDesiredPosition();
+										if (r->isInRegion(agent->getDesiredX(), agent->getDesiredY()))
+											move(agent);
+										// TODO: Else push to stack
+									}		
+
+								}
+							}
+							#pragma omp taskwait
+						}	
+					}
+				 }
+				 else
+				 {
+					#pragma omp parallel for
+					for (Ped::Tagent* agent : agents)
+					{
+						agent->computeNextDesiredPosition();
+						agent->setX(agent->getDesiredX());
+						agent->setY(agent->getDesiredY());
+					}		
+				}
+			// We argue that we don't have to point out shared or private variables in this case
 			break;
 		}
 	}
