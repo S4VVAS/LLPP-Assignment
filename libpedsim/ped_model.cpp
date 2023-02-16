@@ -155,7 +155,7 @@ void Ped::Model::tick()
 				 agent->computeNextDesiredPosition();
 				 if (COLLISIONS)
 				 {
-					 move(agent);
+					 move(agent, false);
 				 }
 				 else
 				 {
@@ -187,29 +187,41 @@ void Ped::Model::tick()
 					{
 						#pragma omp single
 						{
-							// Treat each region as it's own task,
-							// don't start a task for empty regions.
-							for (Ped::region *r : regions)
+							// Agents that are changing region
+							std::stack<Tagent*> otherRegions[regions.size()];
+							for (int i = 0; i < regions.size(); i++)
 							{
-								std::vector<Tagent*> v = r->getAgents(); // Agents within region
+								// Treat each region as it's own task,
+								// don't start a task for empty regions.
+								otherRegions[i] = stack<Tagent*>();
+								std::vector<Tagent*> v = regions[i]->getAgents(); // Agents within region
 								if (v.size() > 0)
-								#pragma omp task
+								#pragma omp task shared(otherRegions)
 								{
-									// TODO: Make agent enter region
-									// ..
-
-									// Move each agent within a region
+									// Move each agent within a region.
+									// If it cannot be moved within a region, push it to the otherRegions stack
 									for (Ped::Tagent* agent : v)
-									{
+									{ 
 										agent->computeNextDesiredPosition();
-										if (r->isInRegion(agent->getDesiredX(), agent->getDesiredY()))
-											move(agent);
-										// TODO: Else push to stack
-									}		
+										if (!regions[i]->isInRegion(agent->getDesiredX(), agent->getDesiredY())) 
+											otherRegions[i].push(agent);
+										else
+											if (!move(agent, true))
+												otherRegions[i].push(agent);
+									}			
 
 								}
 							}
 							#pragma omp taskwait
+							// Take care of transitioning agents
+							for (int i = 0; i < regions.size(); i++)
+							{
+								while (!otherRegions[i].empty())
+								{
+									move(otherRegions[i].top(), false);
+									otherRegions[i].pop();
+								}
+							}
 						}	
 					}
 				 }
@@ -237,10 +249,13 @@ void Ped::Model::tick()
 
 // Moves the agent to the next desired position. If already taken, it will
 // be moved to a location close to it.
-void Ped::Model::move(Ped::Tagent *agent)
+bool Ped::Model::move(Ped::Tagent *agent, bool collisions)
 {
 	// Search for neighboring agents
-	set<const Ped::Tagent *> neighbors = getNeighbors(agent->getX(), agent->getY(), 2);
+	// If we're using collions, only check the current region
+	set<const Ped::Tagent *> neighbors = (collisions) 
+		? getNeighbors(agent->getX(), agent->getY(), 2, (regions[agent->getRegion()])->getAgents())
+		: getNeighbors(agent->getX(), agent->getY(), 2, agents);
 
 	// Retrieve their positions
 	std::vector<std::pair<int, int> > takenPositions;
@@ -272,6 +287,14 @@ void Ped::Model::move(Ped::Tagent *agent)
 	prioritizedAlternatives.push_back(p1);
 	prioritizedAlternatives.push_back(p2);
 
+	if (collisions)
+		for (std::vector<pair<int, int> >::iterator it = prioritizedAlternatives.begin(); it != prioritizedAlternatives.end(); ++it)
+		{
+			Ped::region * r = regions[agent->getRegion()];
+			if (!r->isInRegion((*it).first, (*it).second))
+				return false;
+		}
+
 	// Find the first empty alternative position
 	for (std::vector<pair<int, int> >::iterator it = prioritizedAlternatives.begin(); it != prioritizedAlternatives.end(); ++it) {
 
@@ -285,6 +308,8 @@ void Ped::Model::move(Ped::Tagent *agent)
 			break;
 		}
 	}
+
+	return true;
 }
 
 /// Returns the list of neighbors within dist of the point x/y. This
@@ -294,17 +319,11 @@ void Ped::Model::move(Ped::Tagent *agent)
 /// \param   x the x coordinate
 /// \param   y the y coordinate
 /// \param   dist the distance around x/y that will be searched for agents (search field is a square in the current implementation)
-set<const Ped::Tagent*> Ped::Model::getNeighbors(int x, int y, int dist) const {
+set<const Ped::Tagent*> Ped::Model::getNeighbors(int x, int y, int dist, std::vector<Tagent*> region) const {
 
 	// create the output list
-	
-	// OLD TERRIBLE VERSION
-	// ( It would be better to include only the agents close by, but this programmer is lazy.)	
-	//return set<const Ped::Tagent*>(agents.begin(), agents.end());
-	
-	// HOW THE IMPLEMENTATION SHOULD BE
 	set<const Ped::Tagent*> neighbors;
-	for ( Ped::Tagent* agent : agents)
+	for ( Ped::Tagent* agent : region)
 	{
 		if (abs(agent->getX() - x) < dist && abs(agent->getY() - y) < dist)
 			neighbors.insert(agent);

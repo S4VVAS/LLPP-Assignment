@@ -71,7 +71,7 @@ namespace Ped{
 		std::vector<region*> regions; 
 
 		// Moves an agent towards its next position
-		void move(Ped::Tagent *agent);
+		bool move(Ped::Tagent *agent, bool collisions);
 
 		Gpu_funcs *gpu_funcs;
 
@@ -80,7 +80,7 @@ namespace Ped{
 		///////////////////////////////////////////////
 
 		// Returns the set of neighboring agents for the specified position
-		set<const Ped::Tagent*> getNeighbors(int x, int y, int dist) const;
+		set<const Ped::Tagent*> getNeighbors(int x, int y, int dist, std::vector<Tagent*> region) const;
 
 		void setupRegions();
 
