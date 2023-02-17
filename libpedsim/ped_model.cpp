@@ -218,7 +218,13 @@ void Ped::Model::tick()
 							{
 								while (!otherRegions[i].empty())
 								{
-									move(otherRegions[i].top(), false);
+                                    Ped::Tagent *agent = otherRegions[i].top(); 
+									move(agent, false);
+                                    for (int i = 0; i < regions.size(); i++)
+                                    {
+                                        if (regions[i]->isInRegion(agent->getDesiredX(), agent->getDesiredY()))
+                                            agent->setRegion(i);
+                                    }
 									otherRegions[i].pop();
 								}
 							}
