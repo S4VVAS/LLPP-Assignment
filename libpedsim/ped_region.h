@@ -24,6 +24,7 @@ namespace Ped
             bool isInRegion(int x, int y);
             bool isBusy(int x, int y);
 
+            // TODO: make private
             // The bounds of the region
             int x1;
             int x2;
