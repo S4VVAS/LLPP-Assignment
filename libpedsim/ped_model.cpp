@@ -78,6 +78,7 @@ void Ped::Model::setupRegions()
                     agent->setRegion(j + i * xRegions);
             }
             regions.push_back(r);
+            std::cout << "N agents:" << r->getAgents().size() << std::endl; 
         }
     }
 }

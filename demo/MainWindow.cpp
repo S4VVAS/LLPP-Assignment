@@ -33,7 +33,7 @@ MainWindow::MainWindow(const Ped::Model &pedModel) : model(pedModel)
 		for (int i = 0; i < pedModel.regions.size(); i++)
 		{
 			if (pedModel.regions[i]->x1 == x || pedModel.regions[i]->x2 == x)
-				scene->addLine(x, 0, x, 600, QPen(Qt::red));
+				scene->addLine(x*5, 0, x*5, 600, QPen(Qt::red));
 		}
 		
 	}
@@ -47,7 +47,7 @@ MainWindow::MainWindow(const Ped::Model &pedModel) : model(pedModel)
 		for (int i = 0; i < pedModel.regions.size(); i++)
 		{
 			if (pedModel.regions[i]->y1 == y || pedModel.regions[i]->y2 == y)
-				scene->addLine(0, y, 800, y, QPen(Qt::red));
+				scene->addLine(0, y*5, 800, y*5, QPen(Qt::red));
 		}
 		
 	}
