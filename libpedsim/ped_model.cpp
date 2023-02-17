@@ -321,10 +321,15 @@ bool Ped::Model::move(Ped::Tagent *agent, bool collisions)
 /// \param   dist the distance around x/y that will be searched for agents (search field is a square in the current implementation)
 set<const Ped::Tagent*> Ped::Model::getNeighbors(int x, int y, int dist, std::vector<Tagent*> region) const {
 
-	// create the output list
+	// reference version returns list of all neighbors
+	//if (!COLLISIONS)
+	//	return set<const Ped::Tagent*>(agents.begin(), agents.end());
+	
+	// Our version checks manhattan distance
 	set<const Ped::Tagent*> neighbors;
 	for ( Ped::Tagent* agent : region)
 	{
+
 		if (abs(agent->getX() - x) < dist && abs(agent->getY() - y) < dist)
 			neighbors.insert(agent);
 	}		
