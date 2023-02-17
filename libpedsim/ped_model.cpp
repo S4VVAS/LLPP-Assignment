@@ -213,21 +213,21 @@ void Ped::Model::tick()
 								}
 							}
 							#pragma omp taskwait
-							// Take care of transitioning agents
-							for (int i = 0; i < regions.size(); i++)
-							{
-								while (!otherRegions[i].empty())
-								{
+                            // Take care of transitioning agents
+                            for (int i = 0; i < regions.size(); i++)
+                            {
+                                while (!otherRegions[i].empty())
+                                {
                                     Ped::Tagent *agent = otherRegions[i].top(); 
-									move(agent, false);
+                                    //move(agent, false);
                                     for (int i = 0; i < regions.size(); i++)
                                     {
                                         if (regions[i]->isInRegion(agent->getDesiredX(), agent->getDesiredY()))
                                             agent->setRegion(i);
                                     }
-									otherRegions[i].pop();
-								}
-							}
+                                    otherRegions[i].pop();
+                                }
+                            }
 						}	
 					}
 				 }
