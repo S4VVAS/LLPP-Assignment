@@ -28,12 +28,28 @@ MainWindow::MainWindow(const Ped::Model &pedModel) : model(pedModel)
 	for (int x = 0; x <= 800; x += cellsizePixel)
 	{
 		scene->addLine(x, 0, x, 600, QPen(Qt::gray));
+	
+		/*
+		for (int i = 0; i < pedModel.regions.size(); i++)
+		{
+			if (pedModel.regions[i]->x1 == x || pedModel.regions[i]->x2 == x)
+				scene->addLine(x, 0, x, 600, QPen(Qt::red));
+		}
+		*/
 	}
 
 	// Now add the horizontal lines, paint them gray
 	for (int y = 0; y <= 600; y += cellsizePixel)
 	{
 		scene->addLine(0, y, 800, y, QPen(Qt::gray));
+
+		/*
+		for (int i = 0; i < pedModel.regions.size(); i++)
+		{
+			if (pedModel.regions[i]->y1 == y || pedModel.regions[i]->y2 == y)
+				scene->addLine(0, y, 800, y, QPen(Qt::red));
+		}
+		*/
 	}
 
 	// Create viewAgents with references to the position of the model counterparts
@@ -80,6 +96,9 @@ void MainWindow::paint() {
 		else {
 			color = Qt::red;
 		}
+
+		//TODO: 
+		//assert(color == Qt::green);
 
 		(*it)->paint(color, model.SIMD);
 	}

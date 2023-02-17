@@ -183,7 +183,7 @@ void Ped::Model::tick()
         {
             // Agents that are changing region
             std::stack<Tagent *> otherRegions[regions.size()];
-            #pragma omp parallel num_threads(regions.size() - 1) shared(otherRegions)
+            #pragma omp parallel num_threads(regions.size()) shared(otherRegions)
             {
                 int i = omp_get_thread_num();
                 // Treat each region as it's own task,
@@ -193,7 +193,7 @@ void Ped::Model::tick()
                 if (v.size() > 0)
                     // Move each agent within a region.
                     // If it cannot be moved within a region, push it to the otherRegions stack
-                    #pragma omp for
+                    //#pragma omp for
                     for (Ped::Tagent *agent : v)
                     {
                         agent->computeNextDesiredPosition();
@@ -237,11 +237,12 @@ void Ped::Model::tick()
 
 // Moves the agent to the next desired position. If already taken, it will
 // be moved to a location close to it.
-bool Ped::Model::move(Ped::Tagent *agent, bool collisions)
+bool Ped::Model::move(Ped::Tagent *agent, bool isRegionsActive)
 {
     // Search for neighboring agents
     // If we're using collions, only check the current region
-    set<const Ped::Tagent *> neighbors = (collisions)
+    //collisions = false;
+    set<const Ped::Tagent *> neighbors = (isRegionsActive)
                                              ? getNeighbors(agent->getX(), agent->getY(), 2, (regions[agent->getRegion()])->getAgents())
                                              : getNeighbors(agent->getX(), agent->getY(), 2, agents);
 
@@ -277,7 +278,7 @@ bool Ped::Model::move(Ped::Tagent *agent, bool collisions)
     prioritizedAlternatives.push_back(p1);
     prioritizedAlternatives.push_back(p2);
 
-    if (collisions)
+    if (isRegionsActive)
         for (std::vector<pair<int, int>>::iterator it = prioritizedAlternatives.begin(); it != prioritizedAlternatives.end(); ++it)
         {
             Ped::region *r = regions[agent->getRegion()];
@@ -313,6 +314,9 @@ bool Ped::Model::move(Ped::Tagent *agent, bool collisions)
 /// \param   dist the distance around x/y that will be searched for agents (search field is a square in the current implementation)
 set<const Ped::Tagent *> Ped::Model::getNeighbors(int x, int y, int dist, std::vector<Tagent *> region) const
 {
+    //return set<const Ped::Tagent*>(agents.begin(), agents.end());
+
+    // TODO: Implement a method that checks which region a step
 
     // create the output list
     set<const Ped::Tagent *> neighbors;

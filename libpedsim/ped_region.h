@@ -20,18 +20,20 @@ namespace Ped
             // Remove an agent from the region
             bool remove(Tagent *agent);
             // Checks whether a position is within a region
-            bool isInRegion(int x, int y);
             std::vector<Tagent*> getAgents();
-
-        private:
-            stack<Tagent*> incoming; // All possible candidates of entering the region
-            std::vector<Tagent*> agents; // All the agents in the region
+            bool isInRegion(int x, int y);
+            bool isBusy(int x, int y);
 
             // The bounds of the region
             int x1;
             int x2;
             int y1;
             int y2;
+
+        private:
+            stack<Tagent*> incoming; // All possible candidates of entering the region
+            std::vector<Tagent*> agents; // All the agents in the region
+
     };
 }
 

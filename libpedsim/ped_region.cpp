@@ -42,3 +42,9 @@ bool Ped::region::isInRegion(int x, int y)
         return true;
     return false;
 }
+
+bool Ped::region::isBusy(int x, int y)
+{
+    return false;
+    // Use hashset to check if position is busy
+}
