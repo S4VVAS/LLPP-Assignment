@@ -25,31 +25,26 @@ MainWindow::MainWindow(const Ped::Model &pedModel) : model(pedModel)
 	// Paint on surface
 	scene->setBackgroundBrush(Qt::white);
 
-	for (int x = 0; x <= 800; x += cellsizePixel)
-	{
+	for (int x = 0; x <= 800; x += cellsizePixel){
 		scene->addLine(x, 0, x, 600, QPen(Qt::gray));
-	
-		
-		for (int i = 0; i < pedModel.regions.size(); i++)
-		{
-			if (pedModel.regions[i]->x1 == x || pedModel.regions[i]->x2 == x)
-				scene->addLine(x*5, 0, x*5, 600, QPen(Qt::red));
-		}
-		
 	}
 
 	// Now add the horizontal lines, paint them gray
-	for (int y = 0; y <= 600; y += cellsizePixel)
-	{
+	for (int y = 0; y <= 600; y += cellsizePixel){
 		scene->addLine(0, y, 800, y, QPen(Qt::gray));
+	}
 
-		
-		for (int i = 0; i < pedModel.regions.size(); i++)
-		{
-			if (pedModel.regions[i]->y1 == y || pedModel.regions[i]->y2 == y)
-				scene->addLine(0, y*5, 800, y*5, QPen(Qt::red));
-		}
-		
+	// Adds red lines defining borders of regions
+	for (int i = 0; i < pedModel.regions.size(); i++){
+		int x1 = pedModel.regions[i]->x1 * cellsizePixel;
+		int x2 = pedModel.regions[i]->x2 * cellsizePixel;
+		int y1 = pedModel.regions[i]->y1 * cellsizePixel;
+		int y2 = pedModel.regions[i]->y2 * cellsizePixel;
+
+		scene->addLine(x1, y1, x2, y1, QPen(Qt::red));
+		scene->addLine(x1, y2, x2, y2, QPen(Qt::red));
+		scene->addLine(x1, y1, x1, y2, QPen(Qt::red));
+		scene->addLine(x2, y1, x2, y2, QPen(Qt::red));
 	}
 
 	// Create viewAgents with references to the position of the model counterparts
@@ -98,7 +93,8 @@ void MainWindow::paint() {
 		}
 
 		//TODO: 
-		//assert(color == Qt::green);
+		//Asserts that no collisions (stacked agents) occur 
+		assert(color == Qt::green);
 
 		(*it)->paint(color, model.SIMD);
 	}

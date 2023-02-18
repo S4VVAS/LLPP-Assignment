@@ -299,6 +299,15 @@ bool Ped::Model::move(Ped::Tagent *agent, bool isRegionsActive)
             agent->setX((*it).first);
             agent->setY((*it).second);
 
+			for (int i = 0; i < regions.size(); i++){
+                if (regions[i]->isInRegion(agent->getX(), agent->getY())){
+                    regions[agent->getRegion()]->remove(agent);
+                    agent->setRegion(i);
+                    regions[i]->add(agent);
+                    break;
+                }
+            }
+
             break;
         }
     }
