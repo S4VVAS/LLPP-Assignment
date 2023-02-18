@@ -54,6 +54,9 @@ namespace Ped{
 		int const * const * getHeatmap() const { return blurred_heatmap; };
 		int getHeatmapSize() const;
 
+		// TODO: make private
+		std::vector<region*> regions; 
+
 	private:
 
 		// Denotes which implementation (sequential, parallel implementations..)
@@ -68,7 +71,6 @@ namespace Ped{
 		std::vector<Twaypoint*> destinations;
 
 		// Regions to divide view 
-		std::vector<region*> regions; 
 
 		// Moves an agent towards its next position
 		bool move(Ped::Tagent *agent, bool collisions);
