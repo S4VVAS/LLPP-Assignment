@@ -76,11 +76,7 @@ void Ped::Model::setupRegions()
 			for (Ped::Tagent* agent : agents) 
 			{ 
 				// Add agents and assign to region
-				if (r->add(agent))
-				{
-					//agent->setRegion(j+i*xRegions);
-				}
-
+				r->add(agent);
 			}
 			r->replace();
 			regions.push_back(r);
@@ -231,10 +227,7 @@ void Ped::Model::tick()
                                     move(agent, false, regions[i]);
                                     for (int j = 0; j < regions.size(); j++)
                                     {
-                                        if (regions[j]->add(agent))
-                                        {
-											//agent->setRegion(j);
-										}    
+                                        regions[j]->add(agent);
                                     }
                                     regions[i]->outgoing.pop();
                                 }
@@ -243,7 +236,6 @@ void Ped::Model::tick()
 							for (int i = 0; i < regions.size(); i++)
                             {
 								regions[i]->replace();
-								//std::cout << "region size: " << regions[i]->getAgents().size() << std::endl;
 							}
 						}	
 					}
