@@ -23,7 +23,7 @@
 bool COLLISIONS = false;
 bool LOADBALANCING = true;
 
-unsigned int n_regions = 9; // keep this in a squared number
+unsigned int n_regions = 4; // keep this in a squared number
 
 void Ped::Model::setup(std::vector<Ped::Tagent*> agentsInScenario, std::vector<Twaypoint*> destinationsInScenario, IMPLEMENTATION implementation, bool collisions)
 {
@@ -193,6 +193,13 @@ void Ped::Model::tick()
 							{
 								// Treat each region as it's own task,
 								// don't start a task for empty regions.
+
+								// TODO: Lägg till lastbalansering här!
+								// Bryt ut till funktion
+								// Om inga under-regioner finns så kör direkt,
+								// annars kör två subtasks som båda returnar antal agenter
+								// och  .. rita hur fan du ska göra
+
 								std::vector<Tagent*> v = regions[i]->getAgents(); // Agents within region
 								if (v.size() > 0)
 								#pragma omp task
