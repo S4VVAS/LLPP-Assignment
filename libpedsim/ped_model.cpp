@@ -21,7 +21,7 @@
 
 // TODO: Move these two into the class definitions!
 bool COLLISIONS = false;
-unsigned int n_regions = 4; // keep this in a squared number
+unsigned int n_regions = 9; // keep this in a squared number
 
 void Ped::Model::setup(std::vector<Ped::Tagent*> agentsInScenario, std::vector<Twaypoint*> destinationsInScenario, IMPLEMENTATION implementation, bool collisions)
 {
