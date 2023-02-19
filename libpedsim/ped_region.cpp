@@ -2,6 +2,7 @@
 
 Ped::region::region(int x1, int x2, int y1, int y2)
 {
+    nAgents = 0;
     this->x1 = x1;
     this->x2 = x2;
     this->y1 = y1;
@@ -25,21 +26,6 @@ void Ped::region::replace()
     agents = std::vector<Tagent*>(incoming.begin(), incoming.end());
     incoming = list<Tagent*>();
 }
-
-/*
-bool Ped::region::remove(Ped::Tagent *agent)
-{
-    // TODO:
-    // Might be slow to use remove, since we have to iterate the whole
-    // vector each time, maybe it's better to create a new vector where
-    // you instead add each agent you use and replace it at the end
-    // of each tick
-
-    agents.erase(std::find(agents.begin(),agents.end(),agent)-1);
-
-    return false;
-}
-*/
 
 std::vector<Ped::Tagent*> Ped::region::getAgents()
 {

@@ -21,6 +21,8 @@
 
 // TODO: Move these two into the class definitions!
 bool COLLISIONS = false;
+bool LOADBALANCING = true;
+
 unsigned int n_regions = 9; // keep this in a squared number
 
 void Ped::Model::setup(std::vector<Ped::Tagent*> agentsInScenario, std::vector<Twaypoint*> destinationsInScenario, IMPLEMENTATION implementation, bool collisions)
@@ -204,6 +206,8 @@ void Ped::Model::tick()
 									for (Ped::Tagent* agent : v)
 									{ 
 										agent->computeNextDesiredPosition();
+										// If the agent is not in the region move directly to otherRegions-stack
+										// An optimization
 										if (!regions[i]->isInRegion(agent->getDesiredX(), agent->getDesiredY())) 
 											otherRegions[i].push(agent);
 										else
