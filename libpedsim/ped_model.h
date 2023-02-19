@@ -71,7 +71,7 @@ namespace Ped{
 		std::vector<region*> regions; 
 
 		// Moves an agent towards its next position
-		bool move(Ped::Tagent *agent, bool collisions);
+		bool move(Ped::Tagent *agent, bool collisions, region *r);
 
 		Gpu_funcs *gpu_funcs;
 

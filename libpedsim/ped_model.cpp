@@ -77,7 +77,9 @@ void Ped::Model::setupRegions()
 			{ 
 				// Add agents and assign to region
 				if (r->add(agent))
-					agent->setRegion(j+i*xRegions);
+				{
+					//agent->setRegion(j+i*xRegions);
+				}
 
 			}
 			r->replace();
@@ -158,7 +160,7 @@ void Ped::Model::tick()
 				 agent->computeNextDesiredPosition();
 				 if (COLLISIONS)
 				 {
-					 move(agent, false);
+					 move(agent, false, regions[0]);
 				 }
 				 else
 				 {
@@ -210,7 +212,7 @@ void Ped::Model::tick()
 											regions[i]->outgoing.push(agent);
 										else
 										{
-											if (move(agent, true))
+											if (move(agent, true, regions[i]))
 												regions[i]->add(agent);
 											else
 												regions[i]->outgoing.push(agent);
@@ -226,12 +228,12 @@ void Ped::Model::tick()
                                 while (!regions[i]->outgoing.empty())
                                 {
                                     Ped::Tagent *agent = regions[i]->outgoing.top(); 
-                                    move(agent, false);
+                                    move(agent, false, regions[i]);
                                     for (int j = 0; j < regions.size(); j++)
                                     {
                                         if (regions[j]->add(agent))
                                         {
-											agent->setRegion(j);
+											//agent->setRegion(j);
 										}    
                                     }
                                     regions[i]->outgoing.pop();
@@ -270,14 +272,14 @@ void Ped::Model::tick()
 
 // Moves the agent to the next desired position. If already taken, it will
 // be moved to a location close to it.
-bool Ped::Model::move(Ped::Tagent *agent, bool collisions)
+bool Ped::Model::move(Ped::Tagent *agent, bool collisions, Ped::region *r)
 {
 	// Search for neighboring agents
 	// If we're using collions, only check the current region
 	set<const Ped::Tagent *> neighbors = (collisions) 
-		? getNeighbors(agent->getX(), agent->getY(), 2, (regions[agent->getRegion()])->getAgents())
+		? getNeighbors(agent->getX(), agent->getY(), 2, r->getAgents())
 		: getNeighbors(agent->getX(), agent->getY(), 2, agents);
-
+	 
 	// Retrieve their positions
 	std::vector<std::pair<int, int> > takenPositions;
 	for (std::set<const Ped::Tagent*>::iterator neighborIt = neighbors.begin(); neighborIt != neighbors.end(); ++neighborIt) {
@@ -317,7 +319,6 @@ bool Ped::Model::move(Ped::Tagent *agent, bool collisions)
 
 			if (collisions)
 			{
-				Ped::region * r = regions[agent->getRegion()];
 				if (!r->isInRegion((*it).first, (*it).second))
 					continue;
 			}
