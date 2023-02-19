@@ -78,7 +78,10 @@ void Ped::Model::setupRegions()
 					agent->setRegion(j+i*xRegions);
 
 			}
+			r->replace();
 			regions.push_back(r);
+			// TODO: Remove
+			std::cout << "region size: " << r->getAgents().size() << std::endl;
 		}
 	}
 }
@@ -206,8 +209,13 @@ void Ped::Model::tick()
 										if (!regions[i]->isInRegion(agent->getDesiredX(), agent->getDesiredY())) 
 											otherRegions[i].push(agent);
 										else
-											if (!move(agent, true))
+										{
+											if (move(agent, true))
+												regions[i]->add(agent);
+											else
 												otherRegions[i].push(agent);
+
+										}
 									}			
 
 								}
@@ -219,15 +227,24 @@ void Ped::Model::tick()
                                 while (!otherRegions[i].empty())
                                 {
                                     Ped::Tagent *agent = otherRegions[i].top(); 
-                                    //move(agent, false);
-                                    for (int i = 0; i < regions.size(); i++)
+                                    move(agent, false);
+                                    for (int j = 0; j < regions.size(); j++)
                                     {
-                                        if (regions[i]->isInRegion(agent->getDesiredX(), agent->getDesiredY()))
-                                            agent->setRegion(i);
+                                        if (regions[j]->add(agent))
+                                        {
+											agent->setRegion(j);
+										}    
                                     }
                                     otherRegions[i].pop();
                                 }
+								// TODO: Remove
                             }
+							#pragma omp parallel for
+							for (int i = 0; i < regions.size(); i++)
+                            {
+								regions[i]->replace();
+								//std::cout << "region size: " << regions[i]->getAgents().size() << std::endl;
+							}
 						}	
 					}
 				 }
@@ -293,19 +310,18 @@ bool Ped::Model::move(Ped::Tagent *agent, bool collisions)
 	prioritizedAlternatives.push_back(p1);
 	prioritizedAlternatives.push_back(p2);
 
-	if (collisions)
-		for (std::vector<pair<int, int> >::iterator it = prioritizedAlternatives.begin(); it != prioritizedAlternatives.end(); ++it)
-		{
-			Ped::region * r = regions[agent->getRegion()];
-			if (!r->isInRegion((*it).first, (*it).second))
-				return false;
-		}
-
 	// Find the first empty alternative position
 	for (std::vector<pair<int, int> >::iterator it = prioritizedAlternatives.begin(); it != prioritizedAlternatives.end(); ++it) {
 
 		// If the current position is not yet taken by any neighbor
 		if (std::find(takenPositions.begin(), takenPositions.end(), *it) == takenPositions.end()) {
+
+			if (collisions)
+			{
+				Ped::region * r = regions[agent->getRegion()];
+				if (!r->isInRegion((*it).first, (*it).second))
+					continue;
+			}
 
 			// Set the agent's position 
 			agent->setX((*it).first);
