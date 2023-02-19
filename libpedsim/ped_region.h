@@ -3,6 +3,7 @@
 
 #include "ped_model.h"
 #include <list>
+#include <stack>
 #include <vector>
 //#include <stdatomic.h>
 
@@ -28,6 +29,7 @@ namespace Ped
             // split region into subregions
             region *splitLeft;
             region *splitRight;
+            std::stack<Tagent*> outgoing; // All agents possibly moving out of the region
             int nAgents;
 
         private:

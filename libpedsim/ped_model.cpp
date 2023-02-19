@@ -189,17 +189,15 @@ void Ped::Model::tick()
 					#pragma omp parallel
 					{
 						#pragma omp single
-						{
+						{ 
 							// Agents that are changing region
-							std::stack<Tagent*> otherRegions[regions.size()];
 							for (int i = 0; i < regions.size(); i++)
 							{
 								// Treat each region as it's own task,
 								// don't start a task for empty regions.
-								otherRegions[i] = stack<Tagent*>();
 								std::vector<Tagent*> v = regions[i]->getAgents(); // Agents within region
 								if (v.size() > 0)
-								#pragma omp task shared(otherRegions)
+								#pragma omp task
 								{
 									// Move each agent within a region.
 									// If it cannot be moved within a region, push it to the otherRegions stack
@@ -209,14 +207,13 @@ void Ped::Model::tick()
 										// If the agent is not in the region move directly to otherRegions-stack
 										// An optimization
 										if (!regions[i]->isInRegion(agent->getDesiredX(), agent->getDesiredY())) 
-											otherRegions[i].push(agent);
+											regions[i]->outgoing.push(agent);
 										else
 										{
 											if (move(agent, true))
 												regions[i]->add(agent);
 											else
-												otherRegions[i].push(agent);
-
+												regions[i]->outgoing.push(agent);
 										}
 									}			
 
@@ -226,9 +223,9 @@ void Ped::Model::tick()
                             // Take care of transitioning agents
                             for (int i = 0; i < regions.size(); i++)
                             {
-                                while (!otherRegions[i].empty())
+                                while (!regions[i]->outgoing.empty())
                                 {
-                                    Ped::Tagent *agent = otherRegions[i].top(); 
+                                    Ped::Tagent *agent = regions[i]->outgoing.top(); 
                                     move(agent, false);
                                     for (int j = 0; j < regions.size(); j++)
                                     {
@@ -237,9 +234,8 @@ void Ped::Model::tick()
 											agent->setRegion(j);
 										}    
                                     }
-                                    otherRegions[i].pop();
+                                    regions[i]->outgoing.pop();
                                 }
-								// TODO: Remove
                             }
 							#pragma omp parallel for
 							for (int i = 0; i < regions.size(); i++)

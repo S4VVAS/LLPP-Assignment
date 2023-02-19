@@ -9,6 +9,7 @@ Ped::region::region(int x1, int x2, int y1, int y2)
     this->y2 = y2;
     incoming = list<Tagent*>();
     agents   = std::vector<Tagent*>();
+    outgoing = std::stack<Tagent*>();
 }
 
 bool Ped::region::add(Ped::Tagent *agent)
