@@ -23,6 +23,11 @@ namespace Ped
             bool isInRegion(int x, int y);
             std::vector<Tagent*> getAgents();
 
+            // For dynamic load balancing,
+            // split region into subregions
+            region *splitLeft;
+            region *splitRight;
+
         private:
             list<Tagent*> incoming; // All possible candidates of entering the region
             std::vector<Tagent*> agents; // All the agents in the region

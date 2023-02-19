@@ -21,7 +21,7 @@
 
 // TODO: Move these two into the class definitions!
 bool COLLISIONS = false;
-unsigned int n_regions = 4;
+unsigned int n_regions = 4; // keep this in a squared number
 
 void Ped::Model::setup(std::vector<Ped::Tagent*> agentsInScenario, std::vector<Twaypoint*> destinationsInScenario, IMPLEMENTATION implementation, bool collisions)
 {
@@ -80,8 +80,6 @@ void Ped::Model::setupRegions()
 			}
 			r->replace();
 			regions.push_back(r);
-			// TODO: Remove
-			std::cout << "region size: " << r->getAgents().size() << std::endl;
 		}
 	}
 }
@@ -310,6 +308,7 @@ bool Ped::Model::move(Ped::Tagent *agent, bool collisions)
 	prioritizedAlternatives.push_back(p1);
 	prioritizedAlternatives.push_back(p2);
 
+	bool foundPosition = false;
 	// Find the first empty alternative position
 	for (std::vector<pair<int, int> >::iterator it = prioritizedAlternatives.begin(); it != prioritizedAlternatives.end(); ++it) {
 
@@ -326,12 +325,12 @@ bool Ped::Model::move(Ped::Tagent *agent, bool collisions)
 			// Set the agent's position 
 			agent->setX((*it).first);
 			agent->setY((*it).second);
-
+			foundPosition = true;
 			break;
 		}
 	}
 
-	return true;
+	return foundPosition;
 }
 
 /// Returns the list of neighbors within dist of the point x/y. This
