@@ -14,6 +14,7 @@
 #include <vector>
 #include <map>
 #include <set>
+#include <stack>
 
 #include "ped_agent.h"
 #include "ped_region.h"
@@ -54,8 +55,11 @@ namespace Ped{
 		int const * const * getHeatmap() const { return blurred_heatmap; };
 		int getHeatmapSize() const;
 
-		// TODO: make private
-		std::vector<region*> regions; 
+		void addRegion(region* r);
+		void removeRegion(region* r);
+
+		std::vector<region*> regions;
+
 
 	private:
 
@@ -75,6 +79,10 @@ namespace Ped{
 		// Moves an agent towards its next position
 		bool move(Ped::Tagent *agent, bool collisions);
 
+		std::stack<region*> regionsAdded = stack<region*>();
+		std::stack<region*> regionsRemoved = stack<region*>();
+
+
 		Gpu_funcs *gpu_funcs;
 
 		////////////
@@ -93,6 +101,7 @@ namespace Ped{
 #define SIZE 1024
 #define CELLSIZE 5
 #define SCALED_SIZE SIZE*CELLSIZE
+#define REGION_MAX_SIZE 20
 
 		// The heatmap representing the density of agents
 		int ** heatmap;

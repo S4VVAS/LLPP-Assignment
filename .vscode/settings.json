@@ -1,5 +1,6 @@
 {
     "files.associations": {
+        "tuple": "cpp",
         "cctype": "cpp",
         "clocale": "cpp",
         "cmath": "cpp",
@@ -43,7 +44,6 @@
         "thread": "cpp",
         "cfenv": "cpp",
         "cinttypes": "cpp",
-        "tuple": "cpp",
         "type_traits": "cpp",
         "utility": "cpp",
         "typeindex": "cpp",

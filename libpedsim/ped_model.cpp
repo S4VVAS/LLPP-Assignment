@@ -70,7 +70,7 @@ void Ped::Model::setupRegions()
             int y1 = j * (SCREEN_HEIGHT / yRegions);
             int y2 = (j + 1) * (SCREEN_HEIGHT / yRegions);
             // Att region and fill it up with agents
-            Ped::region *r = new Ped::region(x1, x2, y1, y2);
+            Ped::region *r = new Ped::region(x1, x2, y1, y2, NULL, false, this);
             for (Ped::Tagent *agent : agents)
             {
                 // Add agents and assign to region
@@ -81,6 +81,14 @@ void Ped::Model::setupRegions()
             std::cout << "N agents:" << r->getAgents().size() << std::endl; 
         }
     }
+}
+
+void Ped::Model::addRegion(region* r) {
+    regionsAdded.push(r);
+}
+
+void Ped::Model::removeRegion(region* r) {
+    regionsRemoved.push(r);
 }
 
 // Argument bundle for Pthreads
@@ -203,6 +211,28 @@ void Ped::Model::tick()
                         else if (!move(agent, true))
                             otherRegions[i].push(agent);
                     }
+
+                    //After moving all agents check if region should be split
+                    if(regions[i]->getAgents().size() > REGION_MAX_SIZE)
+                        regions[i]->giveBirth();
+                    
+            }
+
+            //Add regions from stack
+            while(!regionsAdded.empty()){
+                regions.push_back(regionsAdded.top());
+                regionsAdded.pop();
+            }
+            //Remove regions from stack
+            while(!regionsRemoved.empty()){
+                int i = 0;
+                region *r = regionsRemoved.top();
+                for(; i < regions.size(); i++){
+                    if(regions[i] == r)
+                        break;
+                }
+                regions.erase(regions.begin() + i);
+                regionsRemoved.pop();
             }
 
             // Take care of transitioning agents
@@ -214,6 +244,8 @@ void Ped::Model::tick()
                     otherRegions[i].pop();
                 }
             }
+
+                   
         }
         else
         {
@@ -294,20 +326,22 @@ bool Ped::Model::move(Ped::Tagent *agent, bool isRegionsActive)
         // If the current position is not yet taken by any neighbor
         if (std::find(takenPositions.begin(), takenPositions.end(), *it) == takenPositions.end())
         {
-
             // Set the agent's position
             agent->setX((*it).first);
             agent->setY((*it).second);
 
-			for (int i = 0; i < regions.size(); i++){
-                if (regions[i]->isInRegion(agent->getX(), agent->getY())){
+            //Set agents region
+            for (int i = 0; i < regions.size(); i++){
+                if (regions[i]->isInRegion((*it).first, (*it).second) && agent->getRegion() != i){
+                    //Remove agent from old region
                     regions[agent->getRegion()]->remove(agent);
+                    //Set new region to agent
                     agent->setRegion(i);
+                    //Add agent to new region
                     regions[i]->add(agent);
                     break;
                 }
             }
-
             break;
         }
     }
