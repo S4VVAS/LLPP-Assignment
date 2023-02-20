@@ -81,6 +81,11 @@ namespace Ped{
 
 		// Returns the set of neighboring agents for the specified position
 		set<const Ped::Tagent*> getNeighbors(int x, int y, int dist, std::vector<Tagent*> region) const;
+		
+		// Handle agents within a region
+		void handleRegionalAgents(Ped::region *r);
+		// Handle agents that are leaving a region
+		void handleOutgoingAgents(Ped::region *r);
 
 		void setupRegions();
 

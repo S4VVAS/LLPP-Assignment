@@ -16,12 +16,16 @@
 #include <pthread.h>
 #include <stdlib.h>
 
-#define SCREEN_WIDTH 160
-#define SCREEN_HEIGHT 120
+#define SCREEN_WIDTH 160 // How many cells wide the field is
+#define SCREEN_HEIGHT 120 // How many cells high the field is
+
+// For load-balancing
+#define SPLIT_THRESHOLD 0.25 // Threshold for splitting regions
+#define MAX_DEPTH 2
 
 // TODO: Move these two into the class definitions!
 bool COLLISIONS = false;
-bool LOADBALANCING = true;
+bool LOADBALANCING = false;
 
 unsigned int n_regions = 4; // keep this in a squared number
 
@@ -72,7 +76,7 @@ void Ped::Model::setupRegions()
 			int y1 = j*(SCREEN_HEIGHT / yRegions);
 			int y2 = (j+1)*(SCREEN_HEIGHT / yRegions);
 			// Att region and fill it up with agents
-			Ped::region *r = new Ped::region(x1,x2,y1,y2);
+			Ped::region *r = new Ped::region(x1,x2,y1,y2, 0, MAX_DEPTH);
 			for (Ped::Tagent* agent : agents) 
 			{ 
 				// Add agents and assign to region
@@ -107,6 +111,64 @@ void *moveAgent(void *input)
     pthread_exit(NULL);
 }
 
+
+void Ped::Model::handleRegionalAgents(Ped::region *r)
+{
+	if (r->hasSubRegions())
+	{
+		handleRegionalAgents(r->splitLeft);
+		handleRegionalAgents(r->splitRight);
+	}
+	else
+	{
+		std::vector<Tagent*> localAgents = r->getAgents(); // Agents within region
+		if (localAgents.size() > 0)
+		#pragma omp task
+		{
+			// Move each agent within a region.
+			// If it cannot be moved within a region, push it to the otherRegions stack
+			for (Ped::Tagent* agent : localAgents)
+			{ 
+				agent->computeNextDesiredPosition();
+				// If the agent is not in the region move directly to otherRegions-stack
+				// An optimization
+				if (!r->isInRegion(agent->getDesiredX(), agent->getDesiredY())) 
+					r->outgoing.push(agent);
+				else
+				{
+					if (move(agent, true, r))
+						r->add(agent);
+					else
+						r->outgoing.push(agent);
+				}
+			}			
+
+		}
+	}
+}
+
+void Ped::Model::handleOutgoingAgents(Ped::region *r)
+{
+	if (r->hasSubRegions())
+	{
+		handleOutgoingAgents(r->splitLeft);
+		handleOutgoingAgents(r->splitRight);
+	}
+	else
+	{
+		while (!r->outgoing.empty())
+		{
+			Ped::Tagent *agent = r->outgoing.top(); 
+			move(agent, false, r);
+			for (int j = 0; j < regions.size(); j++)
+			{
+				regions[j]->add(agent);
+			}
+			r->outgoing.pop();
+		}
+	}
+
+}
 
 int const tNum = 8; // Number of threads for Pthreads
 
@@ -191,58 +253,24 @@ void Ped::Model::tick()
 							// Agents that are changing region
 							for (int i = 0; i < regions.size(); i++)
 							{
-								// Treat each region as it's own task,
-								// don't start a task for empty regions.
-
-								// TODO: Lägg till lastbalansering här!
-								// Bryt ut till funktion
-								// Om inga under-regioner finns så kör direkt,
-								// annars kör två subtasks som båda returnar antal agenter
-								// och  .. rita hur fan du ska göra
-
-								std::vector<Tagent*> v = regions[i]->getAgents(); // Agents within region
-								if (v.size() > 0)
-								#pragma omp task
-								{
-									// Move each agent within a region.
-									// If it cannot be moved within a region, push it to the otherRegions stack
-									for (Ped::Tagent* agent : v)
-									{ 
-										agent->computeNextDesiredPosition();
-										// If the agent is not in the region move directly to otherRegions-stack
-										// An optimization
-										if (!regions[i]->isInRegion(agent->getDesiredX(), agent->getDesiredY())) 
-											regions[i]->outgoing.push(agent);
-										else
-										{
-											if (move(agent, true, regions[i]))
-												regions[i]->add(agent);
-											else
-												regions[i]->outgoing.push(agent);
-										}
-									}			
-
-								}
+								handleRegionalAgents(regions[i]);
 							}
 							#pragma omp taskwait
                             // Take care of transitioning agents
                             for (int i = 0; i < regions.size(); i++)
                             {
-                                while (!regions[i]->outgoing.empty())
-                                {
-                                    Ped::Tagent *agent = regions[i]->outgoing.top(); 
-                                    move(agent, false, regions[i]);
-                                    for (int j = 0; j < regions.size(); j++)
-                                    {
-                                        regions[j]->add(agent);
-                                    }
-                                    regions[i]->outgoing.pop();
-                                }
+								handleOutgoingAgents(regions[i]);
                             }
 							#pragma omp parallel for
 							for (int i = 0; i < regions.size(); i++)
                             {
-								regions[i]->replace();
+								if (LOADBALANCING)
+								{
+									regions[i]->splitRegion(agents.size(), SPLIT_THRESHOLD);
+									regions[i]->replace();
+								}
+								else
+									regions[i]->replace();
 							}
 						}	
 					}

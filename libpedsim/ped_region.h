@@ -14,7 +14,7 @@ namespace Ped
     class region
     {
         public:
-            region(int x1, int x2, int y1, int y2);
+            region(int x1, int x2, int y1, int y2, short depth, short maxDepth);
             // Add an agent as incoming to the region if the agent
             // is within the region and return true, otherwise false.
             bool add(Tagent *agent);
@@ -24,13 +24,16 @@ namespace Ped
             bool isInRegion(int x, int y);
             std::vector<Tagent*> getAgents();
 
+            void splitRegion(int size, float threshold);
+
+            bool hasSubRegions();
+
             // TODO: Move to private and use getters and setters
             // For dynamic load balancing,
             // split region into subregions
             region *splitLeft;
             region *splitRight;
             std::stack<Tagent*> outgoing; // All agents possibly moving out of the region
-            int nAgents;
 
         private:
             list<Tagent*> incoming; // All possible candidates of entering the region
@@ -41,6 +44,8 @@ namespace Ped
             int x2;
             int y1;
             int y2;
+            short depth;
+            short maxDepth;
     };
 }
 
