@@ -20,14 +20,14 @@
 #define SCREEN_HEIGHT 120 // How many cells high the field is
 
 // For load-balancing
-#define SPLIT_THRESHOLD 0.25 // Threshold for splitting regions
-#define MAX_DEPTH 2
+#define SPLIT_THRESHOLD 0.25 // Threshold for splitting regions (for load-balancing)
+#define MAX_DEPTH 2 // Maximum depth of a region (for load-balancing)
+#define N_REGIONS 4 // Number of regions, keep this in a squared number
 
 // TODO: Move these two into the class definitions!
 bool COLLISIONS = false;
-bool LOADBALANCING = false;
+bool LOADBALANCING = true;
 
-unsigned int n_regions = 4; // keep this in a squared number
 
 void Ped::Model::setup(std::vector<Ped::Tagent*> agentsInScenario, std::vector<Twaypoint*> destinationsInScenario, IMPLEMENTATION implementation, bool collisions)
 {
@@ -63,8 +63,8 @@ void Ped::Model::setup(std::vector<Ped::Tagent*> agentsInScenario, std::vector<T
 void Ped::Model::setupRegions()
 {
 	// Create regions
-	unsigned int xRegions = n_regions / 2; // How many regions in x-coordinate
-	unsigned int yRegions = n_regions / 2; // How many regions in y-coordinate
+	unsigned int xRegions = N_REGIONS / 2; // How many regions in x-coordinate
+	unsigned int yRegions = N_REGIONS / 2; // How many regions in y-coordinate
 	// Divide screen into regions in width (x) and height (y)
 	for (int i = 0; i < xRegions; i++)
 	{
@@ -114,6 +114,7 @@ void *moveAgent(void *input)
 
 void Ped::Model::handleRegionalAgents(Ped::region *r)
 {
+	// If there are sub-regions, run these recursivly
 	if (r->hasSubRegions())
 	{
 		handleRegionalAgents(r->splitLeft);
@@ -136,6 +137,7 @@ void Ped::Model::handleRegionalAgents(Ped::region *r)
 					r->outgoing.push(agent);
 				else
 				{
+					// If move is successful (within region bounds) - add to the region, otherwise push to outgoing agents
 					if (move(agent, true, r))
 						r->add(agent);
 					else
@@ -149,6 +151,7 @@ void Ped::Model::handleRegionalAgents(Ped::region *r)
 
 void Ped::Model::handleOutgoingAgents(Ped::region *r)
 {
+	// If there are sub-regions, run these recursivly
 	if (r->hasSubRegions())
 	{
 		handleOutgoingAgents(r->splitLeft);
@@ -156,13 +159,15 @@ void Ped::Model::handleOutgoingAgents(Ped::region *r)
 	}
 	else
 	{
+		// Pop the whole stack of all outgoing agents and place them in their regions
 		while (!r->outgoing.empty())
 		{
 			Ped::Tagent *agent = r->outgoing.top(); 
-			move(agent, false, r);
+			move(agent, false, r); // move and check collisions with all agents since we move between regions
+			// Add to all regions - the "region->add"-funcion checks whether the agent is within its bounds automatically  
 			for (int j = 0; j < regions.size(); j++)
 			{
-				regions[j]->add(agent);
+				regions[j]->add(agent); // sub-regions will be handled recursivly inside "add"
 			}
 			r->outgoing.pop();
 		}
