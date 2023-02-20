@@ -21,7 +21,7 @@
 
 // For load-balancing
 #define SPLIT_THRESHOLD 0.25 // Threshold for splitting regions (for load-balancing)
-#define MAX_DEPTH 2 // Maximum depth of a region (for load-balancing)
+#define MAX_DEPTH 1 // Maximum depth of a region (for load-balancing)
 #define N_REGIONS 4 // Number of regions, keep this in a squared number
 
 // TODO: Move these two into the class definitions!
@@ -126,12 +126,11 @@ void Ped::Model::handleRegionalAgents(Ped::region *r)
 		if (localAgents.size() > 0)
 		#pragma omp task
 		{
-			// Move each agent within a region.
-			// If it cannot be moved within a region, push it to the otherRegions stack
+			// Iterate all agents within this region
 			for (Ped::Tagent* agent : localAgents)
 			{ 
 				agent->computeNextDesiredPosition();
-				// If the agent is not in the region move directly to otherRegions-stack
+				// If the agent is not in the region move directly to outgoing-stack
 				// An optimization
 				if (!r->isInRegion(agent->getDesiredX(), agent->getDesiredY())) 
 					r->outgoing.push(agent);
@@ -266,17 +265,22 @@ void Ped::Model::tick()
                             {
 								handleOutgoingAgents(regions[i]);
                             }
-							#pragma omp parallel for
+							// Sync which agents is currently in a region 
+							// If load balancing is used, here is where we split or merge regions
 							for (int i = 0; i < regions.size(); i++)
                             {
-								if (LOADBALANCING)
+								#pragma omp task
 								{
-									regions[i]->splitRegion(agents.size(), SPLIT_THRESHOLD);
-									regions[i]->replace();
+									if (LOADBALANCING)
+									{
+										regions[i]->splitRegion(agents.size(), SPLIT_THRESHOLD);
+										regions[i]->replace();
+									}
+									else
+										regions[i]->replace();
 								}
-								else
-									regions[i]->replace();
 							}
+							#pragma omp taskwait
 						}	
 					}
 				 }

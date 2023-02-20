@@ -22,12 +22,15 @@ namespace Ped
             void replace();
             // Checks whether a position is within a region
             bool isInRegion(int x, int y);
-            std::vector<Tagent*> getAgents();
-
-            void splitRegion(int size, float threshold);
+            // Split or merge regions if load-balancing is used, returns how many agents are in the current subregion
+            int splitRegion(int size, float threshold);
 
             bool hasSubRegions();
-
+            // Get the vetor with all agents
+            std::vector<Tagent*> getAgents();
+            // Get the list of all incoming agents
+            list<Tagent*> getIncoming();
+            
             // TODO: Move to private and use getters and setters
             // For dynamic load balancing,
             // split region into subregions
@@ -46,6 +49,8 @@ namespace Ped
             int y2;
             short depth;
             short maxDepth;
+
+            void merge();
     };
 }
 

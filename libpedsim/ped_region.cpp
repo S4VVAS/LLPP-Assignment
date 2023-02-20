@@ -1,6 +1,7 @@
 #include "ped_region.h"
 #include <omp.h>
-#include <iostream> //TODO: REMOVE
+
+#define MERGE_MOD 1.20 // modifier to threshold when merging two sub-regions
 
 Ped::region::region(int x1, int x2, int y1, int y2, short depth, short maxDepth)
 {
@@ -42,13 +43,31 @@ void Ped::region::replace()
         splitRight->replace();
         return;
     }
-    agents = std::vector<Tagent*>(incoming.begin(), incoming.end());
-    incoming = list<Tagent*>();
+    // Create subtasks if we're below the first level of depth
+    if (depth > 0)
+    {
+        #pragma omp task
+        {
+            agents = std::vector<Tagent*>(incoming.begin(), incoming.end());
+            incoming = list<Tagent*>();
+        }
+
+    }
+    else
+    {
+        agents = std::vector<Tagent*>(incoming.begin(), incoming.end());
+        incoming = list<Tagent*>();
+    }
 }
 
 std::vector<Ped::Tagent*> Ped::region::getAgents()
 {
     return agents;
+}
+
+list<Ped::Tagent*> Ped::region::getIncoming()
+{
+    return incoming;
 }
 
 bool Ped::region::isInRegion(int x, int y)
@@ -59,20 +78,26 @@ bool Ped::region::isInRegion(int x, int y)
     return false;
 }
 
-void Ped::region::splitRegion(int size, float threshold)
+int Ped::region::splitRegion(int size, float threshold)
 {
+    int subAgents = 0;
     if (hasSubRegions())
     {
-        splitLeft->splitRegion(size, threshold);
-        splitRight->splitRegion(size, threshold);
-        return;
+        subAgents += splitLeft->splitRegion(size, threshold);
+        subAgents += splitRight->splitRegion(size, threshold);
+
+        // If both subregions are smaller than the threshhold, merge them again
+        int mergeThreshold = threshold * MERGE_MOD; // Make merge theshold slightly larger to avoid constant merging/splitting
+        if ((subAgents / (float) size) <= mergeThreshold)
+            merge();
+
+        return subAgents;
     }
 
-    if ((depth >= maxDepth) || (agents.size() / (float) size) <= threshold)
-        return;
-    // Check which side to split in half
-    std::cout << "Agents in region: " << agents.size() << ", region split in half!" << std::endl; // TODO: REMOVE
+    if ((depth >= maxDepth) || (incoming.size() / (float) size) <= threshold)
+        return incoming.size();
 
+    // Check which side to split in half
     if (abs(y2-y1) < abs(x2-x1))
     {
         int width = x2 - x1;
@@ -91,14 +116,30 @@ void Ped::region::splitRegion(int size, float threshold)
         splitLeft->add(agent);
         splitRight->add(agent);
     }
-    // Commit incoming agents to both regions
-    splitLeft->replace();
-    splitRight->replace();
-    // Clear incoming list of this region
-    std::cout << "this size: " << incoming.size() << ", left: " << splitLeft->getAgents().size() << ", right:" << splitRight->getAgents().size() << std::endl;
+    // Clear agents of this region
+    subAgents = incoming.size();
     incoming = list<Tagent*>();
+    agents   = std::vector<Tagent*>();
 
+    return subAgents;
 
+}
+
+void Ped::region::merge()
+{
+    // Get all agents from sub-regions
+    for (Tagent *agent : splitLeft->getIncoming())
+    {
+        incoming.push_front(agent);
+    }
+    for (Tagent *agent : splitRight->getIncoming())
+    {
+        incoming.push_front(agent);
+    }
+    delete splitLeft;
+    delete splitRight;
+    splitLeft = NULL;
+    splitRight = NULL;
 }
 
 bool Ped::region::hasSubRegions()

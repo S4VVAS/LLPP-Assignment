@@ -82,7 +82,7 @@ void MainWindow::paint() {
 		}
 
 		// TODO: UNCOMMENT TO TEST WHETHER COLLISIONS WORK
-		//assert(color == Qt::green);
+		assert(color == Qt::green);
 
 		(*it)->paint(color, model.SIMD);
 	}
