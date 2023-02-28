@@ -49,7 +49,10 @@ void Ped::Model::setup(std::vector<Ped::Tagent*> agentsInScenario, std::vector<T
 		setupRegions();
 
 	// Set up heatmap (relevant for Assignment 4)
-	setupHeatmapSeq();
+	if (implementation == Ped::SEQ)
+		setupHeatmapSeq();
+	else 
+		setupHeatmapPara();
 
 	SIMD = NULL;
 	if (implementation == Ped::VECTOR)
@@ -129,7 +132,6 @@ void Ped::Model::handleRegionalAgents(Ped::region *r)
 			// Iterate all agents within this region
 			for (Ped::Tagent* agent : localAgents)
 			{ 
-				agent->computeNextDesiredPosition();
 				// If the agent is not in the region move directly to outgoing-stack
 				// An optimization
 				if (!r->isInRegion(agent->getDesiredX(), agent->getDesiredY())) 
@@ -229,11 +231,9 @@ void Ped::Model::tick()
 					 agent->setX(agent->getDesiredX());
 					 agent->setY(agent->getDesiredY());
 				 }
-
-
 			}
-				 
-			 break;
+			updateHeatmapSeq();
+			break;
 		}
 		case Ped::CUDA : {
 			gpu_funcs->update_pos();
@@ -252,6 +252,11 @@ void Ped::Model::tick()
 				 {
 					#pragma omp parallel
 					{
+						#pragma omp for
+						for (Ped::Tagent* agent : agents)
+						{ 
+							agent->computeNextDesiredPosition();
+						}
 						#pragma omp single
 						{ 
 							// Agents that are changing region
@@ -283,6 +288,7 @@ void Ped::Model::tick()
 							#pragma omp taskwait
 						}	
 					}
+					updateHeatmapPara();
 				 }
 				 else
 				 {
