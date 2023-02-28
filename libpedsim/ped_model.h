@@ -106,13 +106,18 @@ namespace Ped{
 		// The final heatmap: blurred and scaled to fit the view
 		int ** blurred_heatmap;
 
-		int * d_heatmap;
 
 		void setupHeatmapSeq();
 		void updateHeatmapSeq();
 		
+		// Parallel heatmap processing
 		void setupHeatmapPara();
 		void updateHeatmapPara();
+		void fadeOutAgents();
+		int *d_heatmap;
+		int *agents_desiredX;
+		int *agents_desiredY;
+
 		//void moveAgent(int start, int end);
 	};
 }

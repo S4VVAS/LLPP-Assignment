@@ -250,6 +250,7 @@ void Ped::Model::tick()
 		{
 			if (COLLISIONS)
 				 {
+					fadeOutAgents();
 					#pragma omp parallel
 					{
 						#pragma omp for
@@ -259,6 +260,7 @@ void Ped::Model::tick()
 						}
 						#pragma omp single
 						{ 
+							updateHeatmapPara();
 							// Agents that are changing region
 							for (int i = 0; i < regions.size(); i++)
 							{
@@ -288,7 +290,6 @@ void Ped::Model::tick()
 							#pragma omp taskwait
 						}	
 					}
-					updateHeatmapPara();
 				 }
 				 else
 				 {
