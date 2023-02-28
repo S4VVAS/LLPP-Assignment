@@ -114,9 +114,9 @@ namespace Ped{
 		void setupHeatmapPara();
 		void updateHeatmapPara();
 		void fadeOutAgents();
-		int *d_heatmap;
-		int *d_scaled_heatmap;
-		int *d_blurred_heatmap;
+		int *hm;
+		int *shm;
+		int *bhm;
 		int *agents_desiredX;
 		int *agents_desiredY;
 

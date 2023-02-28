@@ -260,7 +260,7 @@ void Ped::Model::tick()
 						}
 						#pragma omp single
 						{ 
-							//updateHeatmapPara(); TODO: Uncomment
+							updateHeatmapPara(); 
 							// Agents that are changing region
 							for (int i = 0; i < regions.size(); i++)
 							{
