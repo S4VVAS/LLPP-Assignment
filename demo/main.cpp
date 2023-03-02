@@ -34,7 +34,8 @@ int main(int argc, char*argv[]) {
 	int i = 1;
 	QString scenefile = "scenario.xml";
 	Ped::IMPLEMENTATION implementation_to_test = Ped::SEQ;
-	bool collisions = false;
+	bool usingCollisions = false;
+	bool usingHeatmap = false;
 
 	// Argument handling
 	while (i < argc)
@@ -74,7 +75,13 @@ int main(int argc, char*argv[]) {
 			else if (strcmp(&argv[i][2], "col") == 0)
 			{
 				cout << "Using collisions\n";
-				collisions = true;
+				usingCollisions = true;
+
+			}
+			else if (strcmp(&argv[i][2], "heat") == 0)
+			{
+				cout << "Using heatmap\n";
+				usingHeatmap = true;
 
 			}
 			else
@@ -95,10 +102,11 @@ int main(int argc, char*argv[]) {
 		// Reading the scenario file and setting up the crowd simulation model
 		Ped::Model model;
 		ParseScenario parser(scenefile);
-		model.setup(parser.getAgents(), parser.getWaypoints(), implementation_to_test, collisions);
+		model.setup(parser.getAgents(), parser.getWaypoints(), implementation_to_test, usingCollisions, usingHeatmap);
 
 		// Default number of steps to simulate. Feel free to change this.
-		const int maxNumberOfStepsToSimulate = (collisions) ? 1500 : 100000;
+		const int maxNumberOfStepsToSimulate = 
+			(usingCollisions) ? ((usingHeatmap) ? 10 : 1500) : 100000;
 
 		// Timing version
 		// Run twice, without the gui, to compare the runtimes.
@@ -112,7 +120,7 @@ int main(int argc, char*argv[]) {
 			{
 				Ped::Model model;
 				ParseScenario parser(scenefile);
-				model.setup(parser.getAgents(), parser.getWaypoints(), Ped::SEQ, collisions);
+				model.setup(parser.getAgents(), parser.getWaypoints(), Ped::SEQ, usingCollisions, usingHeatmap);
 				PedSimulation simulation(model, NULL, timing_mode);
 				// Simulation mode to use when profiling (without any GUI)
 				std::cout << "Running reference version...\n";
@@ -128,7 +136,7 @@ int main(int argc, char*argv[]) {
 			{
 				Ped::Model model;
 				ParseScenario parser(scenefile);
-				model.setup(parser.getAgents(), parser.getWaypoints(), implementation_to_test, collisions);
+				model.setup(parser.getAgents(), parser.getWaypoints(), implementation_to_test, usingCollisions, usingHeatmap);
 				PedSimulation simulation(model, NULL, timing_mode);
 				// Simulation mode to use when profiling (without any GUI)
 				std::cout << "Running target version...\n";

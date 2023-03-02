@@ -29,7 +29,12 @@ bool COLLISIONS = false;
 bool LOADBALANCING = true;
 
 
-void Ped::Model::setup(std::vector<Ped::Tagent*> agentsInScenario, std::vector<Twaypoint*> destinationsInScenario, IMPLEMENTATION implementation, bool collisions)
+void Ped::Model::setup(
+	std::vector<Ped::Tagent*> agentsInScenario, 
+	std::vector<Twaypoint*> destinationsInScenario, 
+	IMPLEMENTATION implementation, 
+	bool collisions, 
+	bool usingHeatmap)
 {
 	// Convenience test: does CUDA work on this machine?
 	cuda_test();
@@ -49,6 +54,7 @@ void Ped::Model::setup(std::vector<Ped::Tagent*> agentsInScenario, std::vector<T
 		setupRegions();
 
 	// Set up heatmap (relevant for Assignment 4)
+	this->usingHeatmap = usingHeatmap;
 	if (implementation == Ped::SEQ)
 		setupHeatmapSeq();
 	else 
@@ -60,6 +66,7 @@ void Ped::Model::setup(std::vector<Ped::Tagent*> agentsInScenario, std::vector<T
 	
 	if (implementation == Ped::CUDA)
 		gpu_funcs = new Gpu_funcs(agents);
+
 }
 
 // Set up regions for assigment 3
@@ -232,7 +239,8 @@ void Ped::Model::tick()
 					 agent->setY(agent->getDesiredY());
 				 }
 			}
-			updateHeatmapSeq();
+			if (COLLISIONS && usingHeatmap)
+				updateHeatmapSeq();
 			break;
 		}
 		case Ped::CUDA : {
@@ -252,10 +260,13 @@ void Ped::Model::tick()
 				 {
 					#pragma omp parallel
 					{
-						#pragma omp single
+						if (usingHeatmap)
 						{
-							#pragma omp task
-								fadeOutAgents(); 
+							#pragma omp single
+							{
+								#pragma omp task
+									fadeOutAgents(); 
+							}
 						}
 						#pragma omp for
 						for (Ped::Tagent* agent : agents)
@@ -264,8 +275,11 @@ void Ped::Model::tick()
 						}
 						#pragma omp single
 						{ 
-							#pragma omp task
-								updateHeatmapPara(); 
+							if (usingHeatmap)
+							{
+								#pragma omp task
+									updateHeatmapPara(); 
+							}
 							// Agents that are changing region
 							for (int i = 0; i < regions.size(); i++)
 							{

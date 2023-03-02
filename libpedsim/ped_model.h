@@ -33,12 +33,18 @@ namespace Ped{
 	public:
 
 		// Sets everything up
-		void setup(std::vector<Tagent*> agentsInScenario, std::vector<Twaypoint*> destinationsInScenario,IMPLEMENTATION implementation, bool collisions);
+		void setup(
+			std::vector<Tagent*> agentsInScenario, 
+			std::vector<Twaypoint*> destinationsInScenario,
+			IMPLEMENTATION implementation, 
+			bool collisions, 
+			bool usingHeatmap);
 
 		// Coordinates a time step in the scenario: move all agents by one step (if applicable).
 		void tick();
 
 		Simd_funcs *SIMD;
+		bool usingHeatmap;
 
 		// Returns the agents of this scenario
 		const std::vector<Tagent*> getAgents() const { return agents; };
@@ -53,6 +59,7 @@ namespace Ped{
 		// Returns the heatmap visualizing the density of agents
 		int const * const * getHeatmap() const { return blurred_heatmap; };
 		int getHeatmapSize() const;
+
 
 	private:
 
