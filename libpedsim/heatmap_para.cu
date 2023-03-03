@@ -67,13 +67,18 @@ void fadeOutAgentsKernel(int *heatmap)
 __global__
 void paintHeatmap(int *heatmap, int *blurred_heatmap)
 {
-	int x = blockIdx.x * blockDim.x + threadIdx.x;// - blockIdx.x * 2;
-	int y = blockIdx.y * blockDim.y + threadIdx.y;// - blockIdx.y * 2;
-	int const blockSize = 16;
-	//int tidx = (threadIdx.x - blockIdx.x * 2) % blockSize;
-	//int tidy = (threadIdx.y - blockIdx.y * 2) % blockSize;
-	int tidx = threadIdx.x + 2;
-	int tidy = threadIdx.y + 2;
+	// Since the gaussian blur are working the area around the pixles and
+	// needs 2 pixles of padding, this will cause trouble when we're using a 
+	// scaled heatmap in shared memory that only contains the pixles of the current
+	// block. This means we have to put padding in each block - essentially this means
+	// that each calculated block only moves BLOCKSIZE-2 at a time. That is, we must calculate
+	// some extra blocks.
+	// TODO: We still get offset which is kind of weird
+	int const padding = 2;
+	int x = blockIdx.x * blockDim.x + threadIdx.x - padding * blockIdx.x;
+	int y = blockIdx.y * blockDim.y + threadIdx.y - padding * blockIdx.y;
+	int tidx = threadIdx.x;
+	int tidy = threadIdx.y;
 
 	if (x > SCALED_SIZE || y > SCALED_SIZE)
 		return;
@@ -81,17 +86,16 @@ void paintHeatmap(int *heatmap, int *blurred_heatmap)
 
 	// Get values from the heatmap
 	int const cellSize = 5;
-	int hmX = x / cellSize; 
+	int hmX = x / cellSize;
 	int hmY = (y / cellSize) * SIZE;
 	int value = heatmap[hmX+hmY];
+	//int value;
 	
 	// The scaled heatmap - using shared memory
-	int const padding = 4;
-	__shared__ int sh[padding + blockSize][padding + blockSize]; // we need padding for gaussian blur
-	sh[tidx][tidy] = value;
+	int const blockSize = 16;
+	__shared__ int sh[blockSize][blockSize]; // we need padding for gaussian blur
+	sh[tidy][tidx] = value;
 	
-	// TODO: We also need the values of the padding
-
 	// Weights for blur filter
 	const int w[5][5] = {
 		{ 1, 4, 7, 4, 1 },
@@ -103,11 +107,15 @@ void paintHeatmap(int *heatmap, int *blurred_heatmap)
 
 #define WEIGHTSUM 273
 	// Apply gaussian blurfilter	
-	int i = x + 2;
-	int j = y + 2;
+	int i = x;
+	int j = y;
 
-	if (tidx < 2 || tidx >= 14 || tidy < 2 || tidy >= 14)
+	if (tidx < 2 || tidy < 2 || tidx >= (blockSize - 2) || tidy >= (blockSize - 2))
 		return;
+
+	if (i < 2 || j < 2)
+		return;
+
 	if (i >= SCALED_SIZE - 2 || j >= SCALED_SIZE - 2)
 		return; 
 
@@ -153,12 +161,14 @@ void Ped::Model::updateHeatmapPara()
 		// intensify heat for better color results
 		int hm_value = hm[x+y*SIZE];
 		hm[x+y*SIZE] = (hm_value < (255 - 40)) ? hm_value + 40 : 255;
-
 	}
+
 	// Paint the heatmap
+	const int offset = 2;
 	dim3 threadsPerBlock(16, 16);
-	// num blocks = SCALED_SIZE / threadsPerBlock.x + SCALED_SIZE / (threadsPerBlock.x - 2) + SCALED_SIZE / threadsPerBlock.x 
-	dim3 numBlocks((SCALED_SIZE) / threadsPerBlock.x, (SCALED_SIZE) / threadsPerBlock.y);
+	dim3 numBlocks(
+		(SCALED_SIZE) / (threadsPerBlock.x - offset), 
+		(SCALED_SIZE) / (threadsPerBlock.y - offset));
 	paintHeatmap<<<numBlocks,threadsPerBlock>>>(hm, bhm);
 	cudaDeviceSynchronize();
 }
