@@ -74,7 +74,7 @@ void paintHeatmap(int *heatmap, int *blurred_heatmap)
 	// that each calculated block only moves BLOCKSIZE-2 at a time. That is, we must calculate
 	// some extra blocks.
 	// TODO: We still get offset which is kind of weird
-	int const padding = 2;
+	int const padding = 4;
 	int x = blockIdx.x * blockDim.x + threadIdx.x - padding * blockIdx.x;
 	int y = blockIdx.y * blockDim.y + threadIdx.y - padding * blockIdx.y;
 	int tidx = threadIdx.x;
@@ -165,7 +165,8 @@ void Ped::Model::updateHeatmapPara()
 
 	// Paint the heatmap
 	const int offset = 2;
-	dim3 threadsPerBlock(16, 16);
+	const int bs = 16;
+	dim3 threadsPerBlock(bs, bs);
 	dim3 numBlocks(
 		(SCALED_SIZE) / (threadsPerBlock.x - offset), 
 		(SCALED_SIZE) / (threadsPerBlock.y - offset));
