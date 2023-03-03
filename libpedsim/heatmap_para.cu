@@ -73,7 +73,6 @@ void paintHeatmap(int *heatmap, int *blurred_heatmap)
 	// block. This means we have to put padding in each block - essentially this means
 	// that each calculated block only moves BLOCKSIZE-2 at a time. That is, we must calculate
 	// some extra blocks.
-	// TODO: We still get offset which is kind of weird
 	int const padding = 4;
 	int x = blockIdx.x * blockDim.x + threadIdx.x - padding * blockIdx.x;
 	int y = blockIdx.y * blockDim.y + threadIdx.y - padding * blockIdx.y;
@@ -89,7 +88,6 @@ void paintHeatmap(int *heatmap, int *blurred_heatmap)
 	int hmX = x / cellSize;
 	int hmY = (y / cellSize) * SIZE;
 	int value = heatmap[hmX+hmY];
-	//int value;
 	
 	// The scaled heatmap - using shared memory
 	int const blockSize = 16;
@@ -105,20 +103,13 @@ void paintHeatmap(int *heatmap, int *blurred_heatmap)
 		{ 1, 4, 7, 4, 1 }
 	};
 
-#define WEIGHTSUM 273
-	// Apply gaussian blurfilter	
-	int i = x;
-	int j = y;
 
+	// These pixles are used as padding so ignore these
 	if (tidx < 2 || tidy < 2 || tidx >= (blockSize - 2) || tidy >= (blockSize - 2))
 		return;
 
-	if (i < 2 || j < 2)
-		return;
-
-	if (i >= SCALED_SIZE - 2 || j >= SCALED_SIZE - 2)
-		return; 
-
+	// Apply gaussian blurfilter	
+#define WEIGHTSUM 273
 	int sum = 0;
 	for (int k = -2; k < 3; k++)
 	{
@@ -128,7 +119,7 @@ void paintHeatmap(int *heatmap, int *blurred_heatmap)
 		}
 	}
 	value = sum / WEIGHTSUM;
-	blurred_heatmap[(j * SCALED_SIZE) + i] = 0x00FF0000 | value << 24;
+	blurred_heatmap[(y * SCALED_SIZE) + x] = 0x00FF0000 | value << 24;
 }
 
 
