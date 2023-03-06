@@ -15,10 +15,6 @@ using namespace std;
 // Memory leak check with msvc++
 #include <stdlib.h>
 
-// TODO:
-// 1. Something must use shared memory
-// 2. Maybe move desiredX/desiredY to memory, but would this give speedup or the contrary?
-
 // Sets up the heatmap
 void Ped::Model::setupHeatmapPara()
 {
@@ -60,7 +56,7 @@ void fadeOutAgentsKernel(int *heatmap)
 }
 
 __global__
-void paintHeatmap(int *heatmap, int *blurred_heatmap, long long int *time_step2, long long int *time_step3)
+void paintHeatmap(int *heatmap, int *blurred_heatmap)
 {
 	// Since the gaussian blur are working the area around the pixles and
 	// needs 2 pixles of padding, this will cause trouble when we're using a 
@@ -77,8 +73,6 @@ void paintHeatmap(int *heatmap, int *blurred_heatmap, long long int *time_step2,
 	if (x > SCALED_SIZE || y > SCALED_SIZE)
 		return;
 
-	long long int start = clock64();
-
 	// Get values from the heatmap
 	int const cellSize = 5;
 	int hmX = x / cellSize;
@@ -89,11 +83,6 @@ void paintHeatmap(int *heatmap, int *blurred_heatmap, long long int *time_step2,
 	int const blockSize = 16;
 	__shared__ int sh[blockSize][blockSize]; // we need padding for gaussian blur
 	sh[tidy][tidx] = value;
-
-	long long int end = clock64();
-	(*time_step2) = end - start;
-
-	start = clock64();
 
 	// Weights for blur filter
 	const int w[5][5] = {
@@ -121,29 +110,15 @@ void paintHeatmap(int *heatmap, int *blurred_heatmap, long long int *time_step2,
 	}
 	value = sum / WEIGHTSUM;
 	blurred_heatmap[(y * SCALED_SIZE) + x] = 0x00FF0000 | value << 24;
-
-	end = clock64();
-	(*time_step3) = end - start;
 }
 
 
 // Updates the heatmap according to the agent positions
 void Ped::Model::fadeOutAgents()
 {
-	// start timer
-	cudaEvent_t start, stop;
-	cudaEventCreate(&start);
-	cudaEventCreate(&stop);
-	cudaEventRecord(start, 0);
 	dim3 threadsPerBlock(16, 16);
 	dim3 numBlocks(SIZE / threadsPerBlock.x, SIZE / threadsPerBlock.y);
 	fadeOutAgentsKernel<<<numBlocks, threadsPerBlock>>>(hm);
-	// stop timer
-	cudaEventRecord(stop, 0);
-	cudaEventSynchronize(stop);
-	float elapsedTime;
-	cudaEventElapsedTime(&elapsedTime, start, stop);
-	std::cout << "fadeout agents execution time: " << elapsedTime << std::endl;
 }
 
 
@@ -172,17 +147,12 @@ void Ped::Model::updateHeatmapPara()
 	// Paint the heatmap
 	const int offset = 2; // some offset is used for the gaussian blur padding
 	const int bs = 16; // blocksize
-	long long int *time_step2;
-	long long int *time_step3;
-	cudaMallocManaged(&time_step2, sizeof(long long int));
-	cudaMallocManaged(&time_step3, sizeof(long long int));
+
 	// Setup and start kernel
 	dim3 threadsPerBlock(bs, bs);
 	dim3 numBlocks(
 		(SCALED_SIZE) / (threadsPerBlock.x - offset), 
 		(SCALED_SIZE) / (threadsPerBlock.y - offset));
-	paintHeatmap<<<numBlocks,threadsPerBlock>>>(hm, bhm, time_step2, time_step3);
+	paintHeatmap<<<numBlocks,threadsPerBlock>>>(hm, bhm);
 	cudaDeviceSynchronize();
-	std::cout << "building scaled heatmap execution time: " << (*time_step2) << std::endl;
-	std::cout << "building gaussian blur execution time: " << (*time_step3) << std::endl;
 }
